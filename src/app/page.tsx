@@ -3,8 +3,7 @@ import Features from '@/components/landing/Features'
 import HowItWorks from '@/components/landing/HowItWorks'
 import Simulation from '@/components/landing/Simulation'
 import Testimonials from '@/components/landing/Testimonials'
-import CTASection from '@/components/landing/CTASection'
-import FAQSection from '@/components/landing/FAQSection'
+import Faq from '@/components/landing/Faq'
 import TrustBar from '@/components/landing/TrustBar'
 import ProductCatalog from '@/components/landing/ProductCatalog'
 import PriceList from '@/components/landing/PriceList'
@@ -22,8 +21,7 @@ export default function Home() {
       <Simulation />
       <StatsCounter />
       <Testimonials />
-      <FAQSection />
-      <CTASection />
+      <Faq />
     </>
   )
 }

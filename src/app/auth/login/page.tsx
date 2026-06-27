@@ -6,7 +6,6 @@ import Link from 'next/link'
 import { toast } from 'sonner'
 import api from '@/lib/api-client'
 import { Eye, EyeOff, LogIn } from 'lucide-react'
-import Cookies from 'js-cookie'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -19,8 +18,9 @@ export default function LoginPage() {
     setLoading(true)
     try {
       const res = await api.post('/auth/login', form)
-      // Simpan token ke cookie untuk middleware auth
-      Cookies.set('token', res.data.token, { expires: 7 })
+      // Simpan token ke cookie secara native
+      const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toUTCString()
+      document.cookie = `token=${res.data.token}; expires=${expires}; path=/`
       
       const role = res.data.user.role
       toast.success('Berhasil masuk!')
