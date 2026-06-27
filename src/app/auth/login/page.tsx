@@ -27,6 +27,10 @@ export default function LoginPage() {
       const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toUTCString()
       document.cookie = `token=${res.data.token}; expires=${expires}; path=/`
       
+      // Simpan token dan data user ke localStorage (dibutuhkan oleh api-client)
+      localStorage.setItem('token', res.data.token)
+      localStorage.setItem('user', JSON.stringify(res.data.user))
+      
       const role = res.data.user.role
       toast.success('Berhasil masuk!')
       
