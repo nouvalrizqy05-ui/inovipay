@@ -17,7 +17,12 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
     try {
-      const res = await api.post('/auth/login', form)
+      // API backend mengharapkan field "email", jadi kita map "identifier" ke "email"
+      const res = await api.post('/auth/login', { 
+        email: form.identifier, 
+        password: form.password 
+      })
+      
       // Simpan token ke cookie secara native
       const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toUTCString()
       document.cookie = `token=${res.data.token}; expires=${expires}; path=/`
