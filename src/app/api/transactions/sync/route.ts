@@ -17,6 +17,7 @@ export async function POST(req: NextRequest) {
 
     let synced = 0
     for (const trx of pendingTransactions) {
+      if (!trx.refIdH2h) continue
       try {
         const result = await checkTransaction(trx.refIdH2h)
 
