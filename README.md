@@ -1,6 +1,6 @@
 # INOVIPAY - PPOB Platform
 
-Platform reseller pulsa, data, token PLN, PDAM, top up game — berbasis Next.js 14 + PostgreSQL + Digiflazz API.
+Platform reseller pulsa, data, token PLN, PDAM, top up game paling lengkap — berbasis Next.js 14 + PostgreSQL + Digiflazz API.
 
 ---
 
