@@ -1,0 +1,117 @@
+'use client'
+import { useEffect, useState } from 'react'
+import { Search } from 'lucide-react'
+import { toast } from 'sonner'
+import Loading from '@/components/ui/loading'
+import Empty from '@/components/ui/empty'
+import ConfirmModal from '@/components/ui/confirm-modal'
+import api from '@/lib/api-client'
+import { formatRupiah, formatDate, getStatusBadge, getStatusLabel } from '@/lib/utils'
+
+export default function ResellersPage() {
+  const [resellers, setResellers] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [modal, setModal] = useState<{ open: boolean; reseller: any; action: string }>({ open: false, reseller: null, action: '' })
+
+  useEffect(() => { fetchResellers() }, [search, statusFilter])
+
+  async function fetchResellers() {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams()
+      if (search) params.set('search', search)
+      if (statusFilter) params.set('status', statusFilter)
+      const res = await api.get(`/admin/resellers?${params}`)
+      setResellers(res.data.resellers)
+    } finally { setLoading(false) }
+  }
+
+  async function handleAction() {
+    try {
+      await api.patch(`/admin/resellers/${modal.reseller.id}`, { status: modal.action === 'activate' ? 'ACTIVE' : 'SUSPENDED' })
+      toast.success(modal.action === 'activate' ? 'Reseller diaktifkan' : 'Reseller disuspend')
+      setModal({ open: false, reseller: null, action: '' })
+      fetchResellers()
+    } catch (err: any) {
+      toast.error(err.response?.data?.error ?? 'Gagal')
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold text-gray-900">Manajemen Reseller</h1>
+
+      <div className="flex gap-3 flex-wrap">
+        <div className="relative flex-1 min-w-48">
+          <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+          <input className="input pl-9" placeholder="Cari nama, email, HP..."
+            value={search} onChange={e => setSearch(e.target.value)} />
+        </div>
+        <select className="input w-auto" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+          <option value="">Semua Status</option>
+          <option value="PENDING">Pending</option>
+          <option value="ACTIVE">Aktif</option>
+          <option value="SUSPENDED">Disuspend</option>
+        </select>
+      </div>
+
+      {loading ? <Loading /> : resellers.length === 0 ? <Empty text="Tidak ada reseller" /> : (
+        <div className="card p-0 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  {['Reseller', 'Saldo', 'Transaksi', 'Status', 'Bergabung', 'Aksi'].map(h => (
+                    <th key={h} className="text-left px-4 py-3 font-medium text-gray-600">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {resellers.map(r => (
+                  <tr key={r.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3">
+                      <p className="font-medium text-gray-900">{r.name}</p>
+                      <p className="text-xs text-gray-500">{r.email}</p>
+                      <p className="text-xs text-gray-400">{r.phone}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="font-medium">{formatRupiah(Number(r.wallet?.balance ?? 0))}</p>
+                      <p className="text-xs text-gray-400">Ditahan: {formatRupiah(Number(r.wallet?.balanceHold ?? 0))}</p>
+                    </td>
+                    <td className="px-4 py-3 text-center">{r._count?.transactions ?? 0}</td>
+                    <td className="px-4 py-3"><span className={getStatusBadge(r.status)}>{getStatusLabel(r.status)}</span></td>
+                    <td className="px-4 py-3 text-xs text-gray-500">{formatDate(r.createdAt)}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-2">
+                        {r.status !== 'ACTIVE' && (
+                          <button onClick={() => setModal({ open: true, reseller: r, action: 'activate' })}
+                            className="text-xs bg-green-100 text-green-700 hover:bg-green-200 px-2 py-1 rounded">Aktifkan</button>
+                        )}
+                        {r.status === 'ACTIVE' && (
+                          <button onClick={() => setModal({ open: true, reseller: r, action: 'suspend' })}
+                            className="text-xs bg-red-100 text-red-700 hover:bg-red-200 px-2 py-1 rounded">Suspend</button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      <ConfirmModal
+        isOpen={modal.open}
+        title={modal.action === 'activate' ? 'Aktifkan Reseller?' : 'Suspend Reseller?'}
+        message={`${modal.action === 'activate' ? 'Aktifkan' : 'Suspend'} akun ${modal.reseller?.name}?`}
+        confirmLabel={modal.action === 'activate' ? 'Aktifkan' : 'Suspend'}
+        danger={modal.action === 'suspend'}
+        onConfirm={handleAction}
+        onCancel={() => setModal({ open: false, reseller: null, action: '' })}
+      />
+    </div>
+  )
+}

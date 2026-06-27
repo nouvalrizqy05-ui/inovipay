@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Environment — JANGAN PERNAH COMMIT INI
+.env
+.env.local
+.env.production
+
+# Next.js
+.next/
+out/
+build/
+
+# Prisma
+prisma/migrations/dev.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
