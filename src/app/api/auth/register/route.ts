@@ -5,7 +5,7 @@ import { signToken } from '@/lib/auth'
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, phone, password } = await req.json()
+    const { name, email, phone, password, referralCode } = await req.json()
 
     // Validasi input
     if (!name || !email || !phone || !password) {
@@ -22,6 +22,13 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Cek referral code
+    let referredBy = null
+    if (referralCode) {
+      const referrer = await prisma.user.findUnique({ where: { referralCode } })
+      if (referrer) referredBy = referrer.id
+    }
+
     // Cek duplikat email/phone
     const existing = await prisma.user.findFirst({
       where: { OR: [{ email }, { phone }] },
@@ -35,6 +42,7 @@ export async function POST(req: NextRequest) {
     }
 
     const passwordHash = await bcrypt.hash(password, 12)
+    const newReferralCode = (name.substring(0, 3).toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase()).replace(/[^A-Z0-9]/g, 'X')
 
     // Buat user + wallet dalam satu transaksi
     const user = await prisma.$transaction(async (tx) => {
@@ -46,6 +54,8 @@ export async function POST(req: NextRequest) {
           passwordHash,
           role: 'RESELLER',
           status: 'PENDING', // Perlu approval admin
+          referralCode: newReferralCode,
+          referredBy,
         },
       })
 

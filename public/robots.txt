@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Block admin and internal routes
+Disallow: /admin/
+Disallow: /reseller/
+Disallow: /api/
+
+Sitemap: https://inovipay.com/sitemap.xml

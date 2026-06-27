@@ -1,66 +1,82 @@
 'use client'
+
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import api from '@/lib/api-client'
+import { Eye, EyeOff, LogIn } from 'lucide-react'
+import Cookies from 'js-cookie'
 
 export default function LoginPage() {
   const router = useRouter()
-  const [form, setForm] = useState({ email: '', password: '' })
+  const [form, setForm] = useState({ identifier: '', password: '' })
   const [loading, setLoading] = useState(false)
+  const [showPw, setShowPw] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     try {
       const res = await api.post('/auth/login', form)
-      localStorage.setItem('token', res.data.token)
-      localStorage.setItem('user', JSON.stringify(res.data.user))
-      toast.success('Login berhasil!')
-      if (res.data.user.role === 'ADMIN') router.push('/admin/dashboard')
-      else router.push('/reseller/dashboard')
+      // Simpan token ke cookie untuk middleware auth
+      Cookies.set('token', res.data.token, { expires: 7 })
+      
+      const role = res.data.user.role
+      toast.success('Berhasil masuk!')
+      
+      if (role === 'ADMIN') router.push('/admin')
+      else router.push('/reseller')
+      
     } catch (err: any) {
-      toast.error(err.response?.data?.error ?? 'Login gagal')
+      toast.error(err.response?.data?.error ?? 'Gagal masuk')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full">
         <div className="text-center mb-8">
-          <div className="w-14 h-14 bg-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <span className="text-white font-bold text-2xl">I</span>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">InoviPay</h1>
-          <p className="text-gray-500 text-sm mt-1">Masuk ke akun Anda</p>
+          <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Selamat Datang Kembali</h2>
+          <p className="text-gray-600">Masuk untuk melanjutkan transaksi PPOB Anda</p>
         </div>
 
-        <div className="card">
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="bg-white py-8 px-6 shadow-xl rounded-2xl border border-gray-100">
+          <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
-              <label className="label">Email</label>
-              <input type="email" className="input" placeholder="email@example.com"
-                value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required />
+              <label className="label">Email atau Nomor HP</label>
+              <input type="text" required className="input" placeholder="0812xxx atau budi@email.com"
+                value={form.identifier} onChange={e => setForm({ ...form, identifier: e.target.value })} />
             </div>
+
             <div>
               <label className="label">Password</label>
-              <input type="password" className="input" placeholder="••••••••"
-                value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required />
+              <div className="relative">
+                <input type={showPw ? "text" : "password"} required className="input pr-10" placeholder="••••••••"
+                  value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} />
+                <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-3 text-gray-400 hover:text-gray-600">
+                  {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              <div className="flex justify-end mt-2">
+                <Link href="/auth/forgot-password" className="text-sm text-amber-600 hover:text-amber-700 font-medium">Lupa password?</Link>
+              </div>
             </div>
-            <div className="flex justify-end">
-              <Link href="/auth/forgot-password" className="text-sm text-blue-600 hover:underline">Lupa password?</Link>
-            </div>
-            <button type="submit" disabled={loading} className="btn-primary w-full">
-              {loading ? 'Memproses...' : 'Masuk'}
+
+            <button type="submit" disabled={loading} 
+              className={`w-full py-3 px-4 flex justify-center items-center gap-2 rounded-xl text-white font-bold transition-all
+                ${loading ? 'bg-gray-300 cursor-not-allowed' : 'bg-amber-500 hover:bg-amber-600 shadow-md hover:shadow-lg'}`}>
+              <LogIn className="w-5 h-5" />
+              {loading ? 'Memproses...' : 'Masuk Sekarang'}
             </button>
           </form>
-          <p className="text-center text-sm text-gray-500 mt-4">
-            Belum punya akun?{' '}
-            <Link href="/auth/register" className="text-blue-600 hover:underline font-medium">Daftar sekarang</Link>
-          </p>
+
+          <div className="mt-6 text-center text-sm text-gray-600">
+            Belum bergabung?{' '}
+            <Link href="/auth/register" className="font-bold text-amber-600 hover:text-amber-700">Daftar Mitra Gratis</Link>
+          </div>
         </div>
       </div>
     </div>

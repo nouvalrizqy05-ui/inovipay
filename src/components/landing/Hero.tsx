@@ -12,7 +12,7 @@ export default function Hero() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="lg:grid lg:grid-cols-2 lg:gap-16 items-center">
-          
+
           {/* Left Column - Copywriting */}
           <div className="max-w-2xl mb-12 lg:mb-0 relative z-10">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-100 text-amber-800 font-bold text-sm mb-6 shadow-sm border border-amber-200">
@@ -20,11 +20,11 @@ export default function Hero() {
               <span className="flex h-2.5 w-2.5 rounded-full bg-amber-500"></span>
               Peluang Sidejob Terbaik 2026 🔥
             </div>
-            
+
             <h1 className="text-4xl lg:text-6xl font-extrabold text-gray-900 leading-[1.1] mb-6 tracking-tight">
-              Lompat Lebih Tinggi, <br/> Raih Penghasilan Tambahan <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-600">Jutaan Rupiah!</span>
+              Lompat Lebih Tinggi, <br /> Raih Penghasilan Tambahan <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-600">Jutaan Rupiah!</span>
             </h1>
-            
+
             <p className="text-lg text-gray-600 mb-8 leading-relaxed">
               Bergabunglah menjadi <strong>Mitra Inovi</strong>. Platform keagenan PPOB dan Top-up Game termurah yang dirancang khusus untuk Anda yang mencari <em>side-job</em> menguntungkan, tanpa risiko, dan bisa dikerjakan dari mana saja.
             </p>
@@ -60,13 +60,13 @@ export default function Hero() {
           {/* Right Column - Image */}
           <div className="relative mx-auto w-full max-w-lg lg:max-w-xl">
             <div className="relative z-10 transform transition-transform hover:-translate-y-2 duration-500">
-              <img 
-                src="/hero-illustration.png" 
-                alt="InoviPay Kesuksesan Mitra" 
+              <img
+                src="/hero-illustration.png"
+                alt="InoviPay Kesuksesan Mitra"
                 className="w-full h-auto drop-shadow-2xl"
               />
             </div>
-            
+
             {/* Floating badges */}
             <div className="absolute top-10 -left-8 bg-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 z-20 animate-bounce" style={{ animationDuration: '3.5s' }}>
               <div className="bg-green-100 p-2 rounded-full text-xl">🚀</div>

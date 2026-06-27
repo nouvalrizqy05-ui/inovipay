@@ -13,9 +13,9 @@ export default function Simulation() {
   return (
     <section id="simulasi" className="py-24 bg-amber-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         <div className="lg:grid lg:grid-cols-2 gap-16 items-center">
-          
+
           <div className="mb-12 lg:mb-0">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-100 text-amber-800 font-bold text-sm mb-6">
               <Calculator className="w-4 h-4" />
@@ -46,8 +46,8 @@ export default function Simulation() {
                 <label className="font-bold text-gray-700">Rata-rata Transaksi per Hari</label>
                 <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-lg font-bold">{trxPerDay} Trx</span>
               </div>
-              <input 
-                type="range" min="1" max="100" value={trxPerDay} 
+              <input
+                type="range" min="1" max="100" value={trxPerDay}
                 onChange={(e) => setTrxPerDay(Number(e.target.value))}
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-amber-500"
               />
@@ -58,8 +58,8 @@ export default function Simulation() {
                 <label className="font-bold text-gray-700">Rata-rata Keuntungan (Margin) / Trx</label>
                 <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-lg font-bold">{formatRupiah(margin)}</span>
               </div>
-              <input 
-                type="range" min="500" max="5000" step="500" value={margin} 
+              <input
+                type="range" min="500" max="5000" step="500" value={margin}
                 onChange={(e) => setMargin(Number(e.target.value))}
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-amber-500"
               />
@@ -76,7 +76,7 @@ export default function Simulation() {
                 Peluang nyata tanpa ganggu pekerjaan utama Anda!
               </p>
             </div>
-            
+
           </div>
 
         </div>

@@ -22,20 +22,20 @@ export default function Footer() {
           <div>
             <h4 className="text-white font-bold mb-4">Layanan</h4>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li><Link href="#" className="hover:text-amber-400 transition-colors">Pulsa & Data</Link></li>
-              <li><Link href="#" className="hover:text-amber-400 transition-colors">Token PLN</Link></li>
-              <li><Link href="#" className="hover:text-amber-400 transition-colors">Top-up Game</Link></li>
-              <li><Link href="#" className="hover:text-amber-400 transition-colors">E-Wallet</Link></li>
+              <li><Link href="#katalog" className="hover:text-amber-400 transition-colors">Pulsa & Data</Link></li>
+              <li><Link href="#katalog" className="hover:text-amber-400 transition-colors">Token PLN</Link></li>
+              <li><Link href="#katalog" className="hover:text-amber-400 transition-colors">Top-up Game</Link></li>
+              <li><Link href="#katalog" className="hover:text-amber-400 transition-colors">E-Wallet</Link></li>
             </ul>
           </div>
 
           <div>
             <h4 className="text-white font-bold mb-4">Bantuan</h4>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li><Link href="#" className="hover:text-amber-400 transition-colors">Cara Daftar</Link></li>
-              <li><Link href="#" className="hover:text-amber-400 transition-colors">Syarat & Ketentuan</Link></li>
-              <li><Link href="#" className="hover:text-amber-400 transition-colors">Kebijakan Privasi</Link></li>
-              <li><Link href="#" className="hover:text-amber-400 transition-colors">Hubungi CS</Link></li>
+              <li><Link href="#cara-kerja" className="hover:text-amber-400 transition-colors">Cara Daftar</Link></li>
+              <li><Link href="/terms" className="hover:text-amber-400 transition-colors">Syarat & Ketentuan</Link></li>
+              <li><Link href="/privacy" className="hover:text-amber-400 transition-colors">Kebijakan Privasi</Link></li>
+              <li><a href="https://wa.me/6283836487767" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400 transition-colors">Hubungi CS (WhatsApp)</a></li>
             </ul>
           </div>
 

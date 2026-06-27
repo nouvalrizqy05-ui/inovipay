@@ -11,12 +11,28 @@ export default function DepositPage() {
   const [loading, setLoading] = useState(true)
   const [form, setForm] = useState({ amount: '', proofUrl: '', note: '' })
   const [submitting, setSubmitting] = useState(false)
+  const [bankInfo, setBankInfo] = useState<{ bank_name?: string; bank_account_number?: string; bank_account_name?: string }>({})
+  const [page, setPage] = useState(1)
+  const limit = 10
 
-  useEffect(() => { fetchDeposits() }, [])
+  useEffect(() => { fetchDeposits(); fetchBankInfo() }, [])
+  useEffect(() => { fetchDeposits() }, [page])
+
+  async function fetchBankInfo() {
+    try {
+      const res = await api.get('/admin/config')
+      const configs = res.data.configs as { key: string; value: string }[]
+      const info: Record<string, string> = {}
+      configs.forEach(c => { info[c.key] = c.value })
+      setBankInfo(info)
+    } catch {
+      // Non-critical — will show fallback
+    }
+  }
 
   async function fetchDeposits() {
     try {
-      const res = await api.get('/deposits')
+      const res = await api.get(`/deposits?page=${page}&limit=${limit}`)
       setDeposits(res.data.deposits)
     } finally { setLoading(false) }
   }
@@ -45,9 +61,18 @@ export default function DepositPage() {
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-5">
         <h3 className="font-semibold text-blue-900 mb-3">Rekening Tujuan Transfer</h3>
         <div className="space-y-2 text-sm">
-          <div className="flex justify-between"><span className="text-gray-600">Bank</span><span className="font-medium">BCA / BRI / Mandiri</span></div>
-          <div className="flex justify-between"><span className="text-gray-600">No. Rekening</span><span className="font-medium">— Hubungi Admin —</span></div>
-          <div className="flex justify-between"><span className="text-gray-600">Atas Nama</span><span className="font-medium">— Hubungi Admin —</span></div>
+          <div className="flex justify-between">
+            <span className="text-gray-600">Bank</span>
+            <span className="font-medium">{bankInfo.bank_name || '— Hubungi Admin —'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-600">No. Rekening</span>
+            <span className="font-medium font-mono">{bankInfo.bank_account_number || '— Hubungi Admin —'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-600">Atas Nama</span>
+            <span className="font-medium">{bankInfo.bank_account_name || '— Hubungi Admin —'}</span>
+          </div>
         </div>
         <p className="text-xs text-blue-700 mt-3">⚠️ Setelah transfer, isi form di bawah dan lampirkan bukti transfer.</p>
       </div>
@@ -84,13 +109,27 @@ export default function DepositPage() {
         {deposits.length === 0 ? <Empty text="Belum ada riwayat deposit" /> : (
           <div className="space-y-3">
             {deposits.map(d => (
-              <div key={d.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
-                <div>
-                  <p className="text-sm font-bold text-gray-900">{formatRupiah(Number(d.amount))}</p>
-                  <p className="text-xs text-gray-500">{formatDate(d.createdAt)}</p>
-                  {d.adminNote && <p className="text-xs text-red-500 mt-0.5">Catatan: {d.adminNote}</p>}
+              <div key={d.id} className="flex flex-col p-4 bg-gray-50 rounded-xl border border-gray-200">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <p className="text-sm font-bold text-gray-900">
+                      Total Transfer: <span className="text-amber-600">{formatRupiah(Number(d.amount) + Number(d.uniqueCode || 0))}</span>
+                    </p>
+                    <p className="text-xs text-gray-500">Nominal Asli: {formatRupiah(Number(d.amount))} · Kode Unik: {d.uniqueCode || 0}</p>
+                  </div>
+                  <span className={getStatusBadge(d.status)}>{getStatusLabel(d.status)}</span>
                 </div>
-                <span className={getStatusBadge(d.status)}>{getStatusLabel(d.status)}</span>
+                
+                {d.status === 'PENDING' && (
+                  <div className="bg-amber-50 border border-amber-200 p-2 rounded text-xs text-amber-800 mt-2">
+                    ⚠️ Transfer <strong>tepat</strong> sesuai nominal Total Transfer agar terbaca oleh sistem.
+                  </div>
+                )}
+                
+                <div className="mt-2 text-xs text-gray-500 flex justify-between">
+                  <span>{formatDate(d.createdAt)}</span>
+                  {d.adminNote && <span className="text-red-500 font-medium">Catatan: {d.adminNote}</span>}
+                </div>
               </div>
             ))}
           </div>

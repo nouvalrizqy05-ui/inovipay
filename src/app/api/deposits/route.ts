@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth'
-import { sendNotification, sendWhatsApp } from '@/lib/notification'
+import { sendNotification } from '@/lib/notification'
 
-// POST: reseller ajukan deposit
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await requireAuth(req)
@@ -13,20 +12,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Minimal deposit Rp 10.000' }, { status: 400 })
     }
 
+    const uniqueCode = Math.floor(Math.random() * 900) + 100; // 100-999
+
     const deposit = await prisma.deposit.create({
-      data: { userId, amount, proofUrl, note, status: 'PENDING' },
+      data: { userId, amount, uniqueCode, proofUrl, note, status: 'PENDING' },
       include: { user: { select: { name: true } } },
     })
 
-    // Notifikasi in-app ke reseller
     await sendNotification(userId, 'SYSTEM', 'Deposit Diterima', 
       `Pengajuan deposit Rp ${Number(amount).toLocaleString('id-ID')} sedang diproses admin.`)
 
-    // Alert ke semua admin
     const admins = await prisma.user.findMany({ where: { role: 'ADMIN', status: 'ACTIVE' } })
     for (const admin of admins) {
       await sendNotification(admin.id, 'SYSTEM', 'Deposit Baru Masuk',
-        `${deposit.user.name} mengajukan deposit Rp ${Number(amount).toLocaleString('id-ID')}. Segera cek dan konfirmasi.`)
+        `${deposit.user.name} mengajukan deposit Rp ${Number(amount).toLocaleString('id-ID')}.`)
     }
 
     return NextResponse.json({ deposit }, { status: 201 })
@@ -36,7 +35,6 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// GET: riwayat deposit reseller
 export async function GET(req: NextRequest) {
   try {
     const { userId } = await requireAuth(req)

@@ -25,7 +25,7 @@ export default function Testimonials() {
   return (
     <section id="testimoni" className="py-24 bg-gray-900 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-3xl lg:text-4xl font-extrabold mb-4 tracking-tight">
             Cerita Sukses <span className="text-amber-500">Mitra Inovi</span>

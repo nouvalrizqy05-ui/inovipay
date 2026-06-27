@@ -1,21 +1,39 @@
 {
-  "name": "InoviPay Platform",
+  "name": "InoviPay - Platform Keagenan PPOB",
   "short_name": "InoviPay",
-  "description": "Platform PPOB termurah dan tercepat untuk Mitra Inovi.",
+  "description": "Platform PPOB dan Top-Up Game Terpercaya",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#2563eb",
+  "theme_color": "#f59e0b",
+  "orientation": "portrait",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/icon-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance", "business", "lifestyle"],
+  "shortcuts": [
+    {
+      "name": "Deposit Saldo",
+      "short_name": "Deposit",
+      "description": "Isi ulang saldo InoviPay Anda",
+      "url": "/reseller/deposit"
+    },
+    {
+      "name": "Riwayat Transaksi",
+      "short_name": "Riwayat",
+      "description": "Cek riwayat transaksi terakhir",
+      "url": "/reseller/transactions"
     }
   ]
 }

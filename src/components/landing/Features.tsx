@@ -27,7 +27,7 @@ export default function Features() {
   return (
     <section id="fitur" className="py-24 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4 tracking-tight">
             Kenapa Mitra Inovi <span className="text-amber-500">Pasti Untung?</span>
@@ -39,8 +39,8 @@ export default function Features() {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
           {features.map((feat, idx) => (
-            <div 
-              key={idx} 
+            <div
+              key={idx}
               className="bg-gray-50 rounded-2xl p-8 border border-gray-100 hover:border-amber-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group"
             >
               <div className="bg-white w-16 h-16 rounded-xl flex items-center justify-center shadow-sm mb-6 group-hover:scale-110 transition-transform">
