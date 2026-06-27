@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { ArrowRight, CheckCircle2, Star } from 'lucide-react'
+import InstallPwaButton from '../InstallPwaButton'
 
 export default function Hero() {
   return (
@@ -28,7 +29,7 @@ export default function Hero() {
               Bergabunglah menjadi <strong>Mitra Inovi</strong>. Platform keagenan PPOB dan Top-up Game termurah yang dirancang khusus untuk Anda yang mencari <em>side-job</em> menguntungkan, tanpa risiko, dan bisa dikerjakan dari mana saja.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 mb-8">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-4 mb-8">
               <Link href="/auth/register" className="flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-bold px-8 py-4 rounded-full transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-lg">
                 Daftar Sekarang - Gratis
                 <ArrowRight className="w-6 h-6" />
@@ -36,6 +37,7 @@ export default function Hero() {
               <Link href="#simulasi" className="flex items-center justify-center bg-white hover:bg-gray-50 text-gray-900 font-bold px-8 py-4 rounded-full transition-all border-2 border-gray-200 shadow-sm text-lg">
                 Lihat Simulasi Profit
               </Link>
+              <InstallPwaButton className="w-full sm:w-auto" />
             </div>
 
             <div className="flex items-center gap-4 text-sm text-gray-600 font-medium">
