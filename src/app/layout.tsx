@@ -2,9 +2,6 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { Toaster } from 'sonner'
-import Header from '@/components/landing/Header'
-import Footer from '@/components/landing/Footer'
-import FloatingWhatsApp from '@/components/landing/FloatingWhatsApp'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -37,12 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="id" className="scroll-smooth">
       <body className={inter.className}>
-        <Header />
-        <main className="min-h-screen pt-20">
-          {children}
-        </main>
-        <Footer />
-        <FloatingWhatsApp />
+        {children}
         <Toaster position="top-center" richColors />
       </body>
     </html>
