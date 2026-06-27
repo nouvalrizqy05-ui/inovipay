@@ -30,8 +30,8 @@ export default function LoginPage() {
       const role = res.data.user.role
       toast.success('Berhasil masuk!')
       
-      if (role === 'ADMIN') router.push('/admin')
-      else router.push('/reseller')
+      if (role === 'ADMIN') router.push('/admin/dashboard')
+      else router.push('/reseller/dashboard')
       
     } catch (err: any) {
       toast.error(err.response?.data?.error ?? 'Gagal masuk')
