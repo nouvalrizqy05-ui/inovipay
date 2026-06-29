@@ -20,6 +20,7 @@ export interface TransactionReceiptProps {
   receiptCodeLabel?: string
   onClose?: () => void
   onShare?: () => void
+  onNewTransaction?: () => void
 }
 
 export default function TransactionReceipt({
@@ -32,7 +33,8 @@ export default function TransactionReceipt({
   receiptCode,
   receiptCodeLabel = 'Kode Voucher / Token',
   onClose,
-  onShare
+  onShare,
+  onNewTransaction
 }: TransactionReceiptProps) {
   const [copiedId, setCopiedId] = useState(false)
   const [copiedCode, setCopiedCode] = useState(false)
@@ -149,15 +151,15 @@ export default function TransactionReceipt({
 
           {/* Special Receipt Code Highlight (e.g. PLN Token, Game Voucher) */}
           {receiptCode && (
-            <div className="bg-[#E6F7F5] p-5 border-t border-teal-100">
-              <p className="text-xs font-bold text-teal-800 text-center uppercase tracking-wider mb-2">
+            <div className="bg-orange-50 p-5 border-t border-orange-100">
+              <p className="text-xs font-bold text-orange-800 text-center uppercase tracking-wider mb-2">
                 {receiptCodeLabel}
               </p>
-              <div className="bg-white border-2 border-dashed border-teal-300 rounded-xl p-3 flex items-center justify-between">
+              <div className="bg-white border-2 border-dashed border-orange-300 rounded-xl p-3 flex items-center justify-between">
                 <span className="font-mono font-bold text-lg text-gray-900 tracking-widest">{receiptCode}</span>
                 <button 
                   onClick={() => handleCopy(receiptCode, 'code')}
-                  className="bg-teal-50 text-teal-600 hover:bg-teal-100 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors"
+                  className="bg-orange-50 text-orange-600 hover:bg-orange-100 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors"
                 >
                   {copiedCode ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   {copiedCode ? 'Disalin' : 'Salin'}
@@ -187,8 +189,14 @@ export default function TransactionReceipt({
             </button>
           </div>
           
+          {onNewTransaction && (
+            <button onClick={onNewTransaction} className="w-full py-3.5 bg-white border border-orange-500 text-orange-500 hover:bg-orange-50 font-bold text-base rounded-xl flex items-center justify-center gap-2 transition-colors">
+              Transaksi Baru
+            </button>
+          )}
+
           <Link href="/reseller/dashboard" className="block w-full">
-            <button className="w-full py-3.5 bg-[#00B4A0] hover:bg-[#009B8A] text-white font-bold text-base rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-teal-500/20">
+            <button className="w-full py-3.5 bg-orange-500 hover:bg-orange-600 text-white font-bold text-base rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-orange-500/20">
               <Home className="w-5 h-5" />
               Kembali ke Beranda
             </button>
