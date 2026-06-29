@@ -4,7 +4,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import api from '@/lib/api-client'
-import { Eye, EyeOff, User, Mail, Phone, Lock, Gift, MapPin, Store, Building2, CheckSquare, ArrowLeft } from 'lucide-react'
+import { Eye, EyeOff, User, Mail, Phone, Lock, Gift, MapPin, Store, Building2, CheckSquare, ArrowLeft, Map } from 'lucide-react'
+import { SearchableModalSelect } from '@/components/ui/searchable-modal-select'
 
 interface Region {
   id: string
@@ -23,6 +24,7 @@ export default function RegisterPage() {
   // State for IDs to fetch next levels
   const [selectedProvId, setSelectedProvId] = useState('')
   const [selectedKabId, setSelectedKabId] = useState('')
+  const [selectedKecId, setSelectedKecId] = useState('')
 
   // State for Dropdown Data
   const [provinsis, setProvinsis] = useState<Region[]>([])
@@ -47,6 +49,7 @@ export default function RegisterPage() {
     setKabupatens([])
     setKecamatans([])
     setSelectedKabId('')
+    setSelectedKecId('')
     setForm(prev => ({ ...prev, kabupaten: '', kecamatan: '' }))
     
     if (selectedProvId) {
@@ -60,6 +63,7 @@ export default function RegisterPage() {
   // Fetch Kecamatan when Kabupaten changes
   useEffect(() => {
     setKecamatans([])
+    setSelectedKecId('')
     setForm(prev => ({ ...prev, kecamatan: '' }))
     
     if (selectedKabId) {
@@ -185,36 +189,46 @@ export default function RegisterPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="label">Provinsi</label>
-                  <select className="input cursor-pointer" required value={selectedProvId} onChange={e => {
-                    const id = e.target.value;
-                    const nama = provinsis.find(p => p.id === id)?.nama || '';
-                    setSelectedProvId(id);
-                    setForm({ ...form, provinsi: nama });
-                  }}>
-                    <option value="">Pilih Provinsi</option>
-                    {provinsis.map(p => <option key={p.id} value={p.id}>{p.nama}</option>)}
-                  </select>
+                  <SearchableModalSelect
+                    options={provinsis}
+                    value={selectedProvId}
+                    onChange={(id, nama) => {
+                      setSelectedProvId(id)
+                      setForm({ ...form, provinsi: nama })
+                    }}
+                    placeholder="Pilih Provinsi"
+                    icon={Map}
+                  />
                 </div>
                 <div>
                   <label className="label">Kabupaten / Kota</label>
-                  <select className="input cursor-pointer" required disabled={!selectedProvId} value={selectedKabId} onChange={e => {
-                    const id = e.target.value;
-                    const nama = kabupatens.find(k => k.id === id)?.nama || '';
-                    setSelectedKabId(id);
-                    setForm({ ...form, kabupaten: nama });
-                  }}>
-                    <option value="">Pilih Kabupaten/Kota</option>
-                    {kabupatens.map(k => <option key={k.id} value={k.id}>{k.nama}</option>)}
-                  </select>
+                  <SearchableModalSelect
+                    options={kabupatens}
+                    value={selectedKabId}
+                    onChange={(id, nama) => {
+                      setSelectedKabId(id)
+                      setForm({ ...form, kabupaten: nama })
+                    }}
+                    placeholder="Pilih Kabupaten/Kota"
+                    disabled={!selectedProvId}
+                    icon={Building2}
+                  />
                 </div>
               </div>
 
               <div>
                 <label className="label">Kecamatan</label>
-                <select className="input cursor-pointer" required disabled={!selectedKabId} value={form.kecamatan} onChange={e => setForm({ ...form, kecamatan: e.target.value })}>
-                  <option value="">Pilih Kecamatan</option>
-                  {kecamatans.map(k => <option key={k.id} value={k.nama}>{k.nama}</option>)}
-                </select>
+                <SearchableModalSelect
+                  options={kecamatans}
+                  value={selectedKecId}
+                  onChange={(id, nama) => {
+                    setSelectedKecId(id)
+                    setForm({ ...form, kecamatan: nama })
+                  }}
+                  placeholder="Pilih Kecamatan"
+                  disabled={!selectedKabId}
+                  icon={MapPin}
+                />
               </div>
 
               <div>
