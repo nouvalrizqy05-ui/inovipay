@@ -47,8 +47,8 @@ function VerifyOtpContent() {
         <div className="hidden lg:flex lg:col-span-7 bg-gray-50 flex-col items-center justify-center p-12 relative overflow-hidden">
           <div className="absolute inset-0 bg-[#F97316]/5 backdrop-blur-3xl z-0" />
           <div className="relative z-10 text-center">
-            <div className="w-20 h-20 bg-[#F97316] rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-[#F97316]/30 text-white font-black text-3xl">
-              IP
+            <div className="w-20 h-20 flex items-center justify-center mx-auto mb-6">
+              <img src="/logo-orange.png" alt="InoviStore Logo" className="w-full h-full object-contain" />
             </div>
             <h1 className="text-3xl font-black text-gray-900 mb-4">Verifikasi OTP</h1>
             <p className="text-gray-500 max-w-md mx-auto">Satu langkah lagi untuk memulai bisnis digital Anda. Masukkan kode yang dikirim ke WhatsApp Anda.</p>
@@ -59,8 +59,8 @@ function VerifyOtpContent() {
         <div className="w-full lg:col-span-5 relative z-10">
           {/* Header Mobile */}
           <div className="text-center py-8 px-6 lg:hidden">
-            <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <span className="text-white font-black text-2xl">IP</span>
+            <div className="w-16 h-16 flex items-center justify-center mx-auto mb-4">
+              <img src="/logo-transparent.png" alt="InoviStore Logo" className="w-full h-full object-contain drop-shadow-xl" />
             </div>
             <h1 className="text-2xl font-black text-white">Verifikasi Akun</h1>
             <p className="text-orange-100 text-sm mt-1">Cek kode OTP di WhatsApp Anda</p>

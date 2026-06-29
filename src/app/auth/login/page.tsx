@@ -55,8 +55,8 @@ export default function LoginPage() {
           <div className="absolute bottom-0 left-0 w-80 h-80 bg-[#FF6B35]/10 rounded-full blur-3xl translate-y-1/3 -translate-x-1/3 group-hover:scale-110 transition-transform duration-700" />
           
           <div className="relative z-10 w-full max-w-sm">
-            <div className="w-20 h-20 bg-[#F97316] rounded-3xl flex items-center justify-center mb-8 shadow-xl shadow-[#F97316]/20 text-white font-black text-3xl transform -rotate-6">
-              IP
+            <div className="w-20 h-20 flex items-center justify-center mb-8 transform -rotate-6">
+              <img src="/logo-orange.png" alt="InoviStore Logo" className="w-full h-full object-contain" />
             </div>
             <h1 className="text-4xl font-black text-gray-900 mb-4 leading-tight">Mulai Bisnis<br/><span className="text-[#F97316]">Digital Anda</span></h1>
             <p className="text-gray-500 mb-8">Platform PPOB & Server Pulsa tercepat, teraman, dan terpercaya di Indonesia.</p>
@@ -84,8 +84,8 @@ export default function LoginPage() {
         <div className="w-full lg:col-span-5 relative z-10">
           {/* Header Mobile */}
           <div className="text-center py-10 px-6 lg:hidden">
-            <div className="w-20 h-20 bg-white/20 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <span className="text-white font-black text-3xl">IP</span>
+            <div className="w-20 h-20 flex items-center justify-center mx-auto mb-4">
+              <img src="/logo-transparent.png" alt="InoviStore Logo" className="w-full h-full object-contain drop-shadow-xl" />
             </div>
             <h1 className="text-3xl font-black text-white">InoviStore</h1>
             <p className="text-orange-100 text-sm mt-1">Platform PPOB & Server Pulsa</p>

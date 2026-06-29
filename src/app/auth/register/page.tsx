@@ -103,8 +103,8 @@ export default function RegisterPage() {
         <div className="hidden lg:flex lg:col-span-5 bg-[#F97316] flex-col items-center justify-center p-12 relative overflow-hidden text-white">
           <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
           <div className="relative z-10 w-full text-center">
-            <div className="w-24 h-24 bg-white/20 backdrop-blur-md rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-xl">
-              <span className="text-white font-black text-4xl">IP</span>
+            <div className="w-24 h-24 flex items-center justify-center mx-auto mb-8">
+              <img src="/logo-orange.png" alt="InoviStore Logo" className="w-full h-full object-contain" />
             </div>
             <h1 className="text-3xl font-black mb-4">Bergabung Bersama Kami</h1>
             <p className="text-orange-100 text-sm mb-8 leading-relaxed">Jadilah agen InoviStore dan mulai usaha digitalmu sekarang. Transaksi mudah, margin menguntungkan!</p>
@@ -130,8 +130,8 @@ export default function RegisterPage() {
         <div className="w-full lg:col-span-7 relative z-10 h-full max-h-[90vh] overflow-y-auto custom-scrollbar">
           {/* Header mobile */}
           <div className="text-center py-8 px-6 lg:hidden">
-            <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <span className="text-white font-black text-2xl">IP</span>
+            <div className="w-16 h-16 flex items-center justify-center mx-auto mb-4">
+              <img src="/logo-transparent.png" alt="InoviStore Logo" className="w-full h-full object-contain drop-shadow-xl" />
             </div>
             <h1 className="text-2xl font-black text-white">Daftar Agen</h1>
             <p className="text-orange-100 text-sm mt-1">Mulai usaha digital dari rumah</p>
