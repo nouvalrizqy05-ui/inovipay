@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Search, ChevronDown, X, Check } from 'lucide-react'
 
 export interface Option {
@@ -27,6 +28,11 @@ export function SearchableModalSelect({
 }: SearchableModalSelectProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   // Find the selected option's name for display
   const selectedName = options.find((opt) => opt.id === value)?.nama || ''
@@ -64,8 +70,8 @@ export function SearchableModalSelect({
         <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />
       </button>
 
-      {/* Full-screen Modal */}
-      {isOpen && (
+      {/* Full-screen Modal using Portal to escape stacking contexts */}
+      {isOpen && isMounted && createPortal(
         <div className="fixed inset-0 z-[100] bg-white flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-300">
           {/* Header */}
           <div className="pt-8 pb-4 px-4 bg-white border-b border-gray-100 sticky top-0 z-10 shadow-sm flex flex-col gap-4">
@@ -105,7 +111,8 @@ export function SearchableModalSelect({
                     onClick={() => handleSelect(opt.id, opt.nama)}
                     className="w-full flex items-center justify-between px-4 py-4 rounded-xl text-left transition-colors hover:bg-orange-50 group"
                   >
-                    <span className={`text-sm ${value === opt.id ? 'font-bold text-[#F97316]' : 'text-gray-700 group-hover:text-[#F97316]'}`}>
+                    <span className={`text-sm flex items-center gap-3 ${value === opt.id ? 'font-bold text-[#F97316]' : 'text-gray-700 group-hover:text-[#F97316]'}`}>
+                      <Icon className={`w-4 h-4 ${value === opt.id ? 'text-[#F97316]' : 'text-gray-400 group-hover:text-[#F97316]'}`} />
                       {opt.nama}
                     </span>
                     {value === opt.id && (
@@ -121,7 +128,8 @@ export function SearchableModalSelect({
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   )
