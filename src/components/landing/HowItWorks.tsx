@@ -3,7 +3,7 @@ export default function HowItWorks() {
     {
       num: "01",
       title: "Daftar Akun Gratis",
-      desc: "Tidak ada biaya pendaftaran. Cukup siapkan email, password, dan nomor WhatsApp. Dalam hitungan detik, akun InoviPay Anda langsung aktif!"
+      desc: "Tidak ada biaya pendaftaran. Cukup siapkan email, password, dan nomor WhatsApp. Dalam hitungan detik, akun InoviStore Anda langsung aktif!"
     },
     {
       num: "02",

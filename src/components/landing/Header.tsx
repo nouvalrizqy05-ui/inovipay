@@ -20,12 +20,12 @@ export default function Header() {
     <header className="fixed w-full top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
-          <div className="flex items-center gap-2">
-            <div className="bg-amber-500 p-2 rounded-lg">
-              <Rocket className="w-6 h-6 text-white" />
+          <div className="flex items-center gap-2 cursor-pointer">
+            <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center">
+              <img src="/logo-orange.png" alt="InoviStore Logo" className="w-full h-full object-contain" />
             </div>
             <span className="text-2xl font-extrabold bg-gradient-to-r from-amber-600 to-orange-500 bg-clip-text text-transparent tracking-tight">
-              InoviPay
+              InoviStore
             </span>
           </div>
           

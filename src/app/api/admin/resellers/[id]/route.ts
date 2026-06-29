@@ -6,10 +6,15 @@ import { sendNotification, sendWhatsApp } from '@/lib/notification'
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     await requireAdmin(req)
-    const { status } = await req.json() // 'ACTIVE' | 'SUSPENDED'
+    const { status, action } = await req.json() // status: 'ACTIVE' | 'SUSPENDED', action?: 'RESET_SESSION'
 
     const reseller = await prisma.user.findUnique({ where: { id: params.id } })
     if (!reseller) return NextResponse.json({ error: 'Reseller tidak ditemukan' }, { status: 404 })
+
+    if (action === 'RESET_SESSION') {
+      await prisma.user.update({ where: { id: params.id }, data: { currentSessionId: null } })
+      return NextResponse.json({ message: 'Sesi perangkat berhasil direset' })
+    }
 
     await prisma.user.update({ where: { id: params.id }, data: { status } })
 
@@ -28,5 +33,17 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (error.message === 'UNAUTHORIZED') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     if (error.message === 'FORBIDDEN') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     return NextResponse.json({ error: 'Terjadi kesalahan server' }, { status: 500 })
+  }
+}
+
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    await requireAdmin(req)
+    await prisma.user.delete({ where: { id: params.id } })
+    return NextResponse.json({ message: 'Akun reseller berhasil dihapus permanen' })
+  } catch (error: any) {
+    if (error.message === 'UNAUTHORIZED') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (error.message === 'FORBIDDEN') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    return NextResponse.json({ error: 'Gagal menghapus akun reseller' }, { status: 500 })
   }
 }

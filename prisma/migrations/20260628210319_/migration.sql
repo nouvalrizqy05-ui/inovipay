@@ -5,6 +5,9 @@ CREATE TYPE "Role" AS ENUM ('ADMIN', 'RESELLER');
 CREATE TYPE "UserStatus" AS ENUM ('ACTIVE', 'SUSPENDED', 'PENDING');
 
 -- CreateEnum
+CREATE TYPE "UserTier" AS ENUM ('RESELLER', 'AGEN', 'MASTER_DEALER');
+
+-- CreateEnum
 CREATE TYPE "TransactionStatus" AS ENUM ('PENDING', 'SUCCESS', 'FAILED');
 
 -- CreateEnum
@@ -14,7 +17,7 @@ CREATE TYPE "DepositStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
 CREATE TYPE "ProductCategory" AS ENUM ('PULSA', 'DATA', 'TOKEN_PLN', 'PDAM', 'GAME', 'LAINNYA');
 
 -- CreateEnum
-CREATE TYPE "NotificationType" AS ENUM ('TRANSACTION_SUCCESS', 'TRANSACTION_FAILED', 'DEPOSIT_APPROVED', 'DEPOSIT_REJECTED', 'LOW_BALANCE_ALERT', 'SYSTEM');
+CREATE TYPE "NotificationType" AS ENUM ('TRANSACTION_SUCCESS', 'TRANSACTION_FAILED', 'DEPOSIT_APPROVED', 'DEPOSIT_REJECTED', 'LOW_BALANCE_ALERT', 'REFUND', 'SYSTEM', 'PROMO');
 
 -- CreateTable
 CREATE TABLE "users" (
@@ -25,7 +28,11 @@ CREATE TABLE "users" (
     "password_hash" TEXT NOT NULL,
     "pin_hash" TEXT,
     "role" "Role" NOT NULL DEFAULT 'RESELLER',
+    "tier" "UserTier" NOT NULL DEFAULT 'RESELLER',
     "status" "UserStatus" NOT NULL DEFAULT 'PENDING',
+    "points" INTEGER NOT NULL DEFAULT 0,
+    "referral_code" TEXT,
+    "referred_by" TEXT,
     "reset_token" TEXT,
     "reset_token_exp" TIMESTAMP(3),
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -49,8 +56,6 @@ CREATE TABLE "wallets" (
 CREATE TABLE "wallet_ledger" (
     "id" TEXT NOT NULL,
     "wallet_id" TEXT NOT NULL,
-    "transaction_id" TEXT,
-    "deposit_id" TEXT,
     "amount" DECIMAL(12,2) NOT NULL,
     "type" TEXT NOT NULL,
     "note" TEXT,
@@ -60,26 +65,15 @@ CREATE TABLE "wallet_ledger" (
 );
 
 -- CreateTable
-CREATE TABLE "brands" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "slug" TEXT NOT NULL,
-    "logo_url" TEXT,
-    "category" "ProductCategory" NOT NULL,
-
-    CONSTRAINT "brands_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "products" (
     "id" TEXT NOT NULL,
     "code" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "category" "ProductCategory" NOT NULL,
-    "brand_id" TEXT,
-    "provider_name" TEXT NOT NULL DEFAULT 'DIGIFLAZZ',
     "cost_price" DECIMAL(12,2) NOT NULL,
-    "sell_price" DECIMAL(12,2) NOT NULL,
+    "price_reseller" DECIMAL(12,2) NOT NULL,
+    "price_agen" DECIMAL(12,2) NOT NULL,
+    "price_master_dealer" DECIMAL(12,2) NOT NULL,
     "sku_h2h" TEXT NOT NULL,
     "is_active" BOOLEAN NOT NULL DEFAULT true,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -93,15 +87,15 @@ CREATE TABLE "transactions" (
     "user_id" TEXT NOT NULL,
     "product_id" TEXT NOT NULL,
     "target_number" TEXT NOT NULL,
-    "target_zone" TEXT,
+    "customer_name" TEXT,
     "cost_price" DECIMAL(12,2) NOT NULL,
     "sell_price" DECIMAL(12,2) NOT NULL,
     "margin" DECIMAL(12,2) NOT NULL,
+    "points_earned" INTEGER NOT NULL DEFAULT 0,
     "ref_id_h2h" TEXT,
     "sn" TEXT,
     "status" "TransactionStatus" NOT NULL DEFAULT 'PENDING',
     "fail_reason" TEXT,
-    "provider_callback_raw" JSONB,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -116,6 +110,7 @@ CREATE TABLE "deposits" (
     "proof_url" TEXT,
     "note" TEXT,
     "admin_note" TEXT,
+    "method" TEXT NOT NULL DEFAULT 'TRANSFER',
     "status" "DepositStatus" NOT NULL DEFAULT 'PENDING',
     "approved_by" TEXT,
     "approved_at" TIMESTAMP(3),
@@ -139,6 +134,18 @@ CREATE TABLE "notifications" (
 );
 
 -- CreateTable
+CREATE TABLE "point_ledger" (
+    "id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "points" INTEGER NOT NULL,
+    "type" TEXT NOT NULL,
+    "note" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "point_ledger_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "system_config" (
     "id" TEXT NOT NULL,
     "key" TEXT NOT NULL,
@@ -148,6 +155,55 @@ CREATE TABLE "system_config" (
     CONSTRAINT "system_config_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "banners" (
+    "id" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "image_url" TEXT NOT NULL,
+    "link_url" TEXT,
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "banners_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "favorite_numbers" (
+    "id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "label" TEXT NOT NULL,
+    "number" TEXT NOT NULL,
+    "category" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "favorite_numbers_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "catatan" (
+    "id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "catatan_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "kasir_sessions" (
+    "id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "items" JSONB NOT NULL,
+    "total" DECIMAL(12,2) NOT NULL,
+    "note" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "kasir_sessions_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "users_phone_key" ON "users"("phone");
 
@@ -155,10 +211,10 @@ CREATE UNIQUE INDEX "users_phone_key" ON "users"("phone");
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "wallets_user_id_key" ON "wallets"("user_id");
+CREATE UNIQUE INDEX "users_referral_code_key" ON "users"("referral_code");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "brands_slug_key" ON "brands"("slug");
+CREATE UNIQUE INDEX "wallets_user_id_key" ON "wallets"("user_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "products_code_key" ON "products"("code");
@@ -176,15 +232,6 @@ ALTER TABLE "wallets" ADD CONSTRAINT "wallets_user_id_fkey" FOREIGN KEY ("user_i
 ALTER TABLE "wallet_ledger" ADD CONSTRAINT "wallet_ledger_wallet_id_fkey" FOREIGN KEY ("wallet_id") REFERENCES "wallets"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "wallet_ledger" ADD CONSTRAINT "wallet_ledger_transaction_id_fkey" FOREIGN KEY ("transaction_id") REFERENCES "transactions"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "wallet_ledger" ADD CONSTRAINT "wallet_ledger_deposit_id_fkey" FOREIGN KEY ("deposit_id") REFERENCES "deposits"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "products" ADD CONSTRAINT "products_brand_id_fkey" FOREIGN KEY ("brand_id") REFERENCES "brands"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "transactions" ADD CONSTRAINT "transactions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -195,3 +242,15 @@ ALTER TABLE "deposits" ADD CONSTRAINT "deposits_user_id_fkey" FOREIGN KEY ("user
 
 -- AddForeignKey
 ALTER TABLE "notifications" ADD CONSTRAINT "notifications_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "point_ledger" ADD CONSTRAINT "point_ledger_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "favorite_numbers" ADD CONSTRAINT "favorite_numbers_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "catatan" ADD CONSTRAINT "catatan_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "kasir_sessions" ADD CONSTRAINT "kasir_sessions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

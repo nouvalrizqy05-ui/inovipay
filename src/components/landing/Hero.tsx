@@ -62,7 +62,7 @@ export default function Hero() {
             <div className="relative z-10 transform transition-transform hover:-translate-y-2 duration-500">
               <img
                 src="/hero-illustration.png"
-                alt="InoviPay Kesuksesan Mitra"
+                alt="InoviStore Kesuksesan Mitra"
                 className="w-full h-auto drop-shadow-2xl"
               />
             </div>

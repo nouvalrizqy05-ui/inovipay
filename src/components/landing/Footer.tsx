@@ -9,10 +9,10 @@ export default function Footer() {
           
           <div className="md:col-span-2">
             <div className="flex items-center gap-2 mb-4">
-              <div className="bg-amber-500 p-1.5 rounded-lg">
-                <Rocket className="w-5 h-5 text-white" />
+              <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center">
+                <img src="/logo-transparent.png" alt="InoviStore Logo" className="w-full h-full object-contain" />
               </div>
-              <span className="text-2xl font-extrabold text-white">InoviPay</span>
+              <span className="text-2xl font-extrabold text-white">InoviStore</span>
             </div>
             <p className="text-sm text-gray-400 max-w-sm mb-6 leading-relaxed">
               Platform PPOB andalan untuk Mitra Inovi di seluruh Indonesia. Solusi cerdas mengubah waktu luang menjadi penghasilan tambahan nyata.
@@ -42,7 +42,7 @@ export default function Footer() {
         </div>
         
         <div className="pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center text-sm">
-          <p>© {new Date().getFullYear()} InoviPay. Hak Cipta Dilindungi.</p>
+          <p>© {new Date().getFullYear()} InoviStore. Hak Cipta Dilindungi.</p>
           <p className="mt-4 md:mt-0 text-gray-500">
             Dibuat dengan ❤️ untuk seluruh Mitra Inovi.
           </p>

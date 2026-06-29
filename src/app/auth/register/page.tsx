@@ -1,164 +1,290 @@
 'use client'
-
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import api from '@/lib/api-client'
-import { Eye, EyeOff, ShieldCheck } from 'lucide-react'
+import { Eye, EyeOff, User, Mail, Phone, Lock, Gift, MapPin, Store, Building2, CheckSquare, ArrowLeft } from 'lucide-react'
+
+interface Region {
+  id: string
+  nama: string
+}
 
 export default function RegisterPage() {
   const router = useRouter()
-  const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', confirmPassword: '', referralCode: '' })
-  const [loading, setLoading] = useState(false)
-  const [agreed, setAgreed] = useState(false)
-  const [showPw, setShowPw] = useState(false)
   
-  // Real-time validation
-  const validations = {
-    name: form.name.length >= 3,
-    email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email),
-    phone: /^08[0-9]{8,12}$/.test(form.phone),
-    password: form.password.length >= 8,
-    confirmPassword: form.password === form.confirmPassword && form.password !== '',
-  }
+  const [form, setForm] = useState({
+    name: '', storeName: '', email: '', phone: '', 
+    provinsi: '', kabupaten: '', kecamatan: '', alamat: '',
+    pin: '', confirmPin: '', referralCode: ''
+  })
+  
+  // State for IDs to fetch next levels
+  const [selectedProvId, setSelectedProvId] = useState('')
+  const [selectedKabId, setSelectedKabId] = useState('')
 
-  const allValid = Object.values(validations).every(Boolean) && agreed
-  const [touched, setTouched] = useState<Record<string, boolean>>({})
+  // State for Dropdown Data
+  const [provinsis, setProvinsis] = useState<Region[]>([])
+  const [kabupatens, setKabupatens] = useState<Region[]>([])
+  const [kecamatans, setKecamatans] = useState<Region[]>([])
+  
+  const [agreed, setAgreed] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [showPw, setShowPw] = useState(false)
+  const [showConfirmPw, setShowConfirmPw] = useState(false)
 
-  const handleBlur = (field: string) => setTouched({ ...touched, [field]: true })
+  // Fetch Provinsis on mount
+  useEffect(() => {
+    fetch('https://ibnux.github.io/data-indonesia/provinsi.json')
+      .then(res => res.json())
+      .then(data => setProvinsis(data))
+      .catch(() => toast.error('Gagal mengambil data provinsi'))
+  }, [])
 
-  const getPasswordStrength = () => {
-    let score = 0
-    if (form.password.length > 7) score += 1
-    if (/[A-Z]/.test(form.password)) score += 1
-    if (/[0-9]/.test(form.password)) score += 1
-    if (/[^A-Za-z0-9]/.test(form.password)) score += 1
-    return score
-  }
+  // Fetch Kabupaten when Provinsi changes
+  useEffect(() => {
+    setKabupatens([])
+    setKecamatans([])
+    setSelectedKabId('')
+    setForm(prev => ({ ...prev, kabupaten: '', kecamatan: '' }))
+    
+    if (selectedProvId) {
+      fetch(`https://ibnux.github.io/data-indonesia/kabupaten/${selectedProvId}.json`)
+        .then(res => res.json())
+        .then(data => setKabupatens(data))
+        .catch(() => toast.error('Gagal mengambil data kabupaten'))
+    }
+  }, [selectedProvId])
+
+  // Fetch Kecamatan when Kabupaten changes
+  useEffect(() => {
+    setKecamatans([])
+    setForm(prev => ({ ...prev, kecamatan: '' }))
+    
+    if (selectedKabId) {
+      fetch(`https://ibnux.github.io/data-indonesia/kecamatan/${selectedKabId}.json`)
+        .then(res => res.json())
+        .then(data => setKecamatans(data))
+        .catch(() => toast.error('Gagal mengambil data kecamatan'))
+    }
+  }, [selectedKabId])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!allValid) { toast.error('Periksa kembali isian Anda'); return }
+    if (!agreed) { toast.error('Anda harus menyetujui S&K'); return }
+    if (form.pin !== form.confirmPin) { toast.error('PIN tidak cocok'); return }
+    if (form.pin.length !== 6) { toast.error('PIN harus persis 6 digit angka'); return }
+    
     setLoading(true)
     try {
-      await api.post('/auth/register', { 
-        name: form.name, 
-        email: form.email, 
-        phone: form.phone, 
-        password: form.password, 
-        referralCode: form.referralCode 
-      })
-      toast.success('Registrasi berhasil! Menunggu aktivasi admin.')
-      router.push('/auth/login')
+      const res = await api.post('/auth/register', form)
+      toast.success(res.data.message)
+      setTimeout(() => {
+        router.push(`/auth/login`)
+      }, 500)
     } catch (err: any) {
-      toast.error(err.response?.data?.error ?? 'Gagal daftar')
-    } finally { setLoading(false) }
+      toast.error(err.response?.data?.error ?? 'Registrasi gagal')
+      setLoading(false)
+    }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Daftar Mitra Baru</h2>
-          <p className="text-gray-600">Gabung InoviPay dan mulai hasilkan cuan hari ini!</p>
+    <div className="min-h-screen bg-gradient-to-br from-[#F97316] via-[#F97316] to-[#C2410C] flex items-end lg:items-center justify-center p-0 lg:p-4 relative">
+      
+      {/* Tombol Kembali ke Landing Page */}
+      <Link href="/" className="absolute top-6 left-6 lg:top-8 lg:left-8 z-50 flex items-center justify-center w-10 h-10 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full text-white transition-all active:scale-95 shadow-lg shadow-[#F97316]/20">
+        <ArrowLeft className="w-5 h-5" />
+      </Link>
+
+      <div className="w-full lg:max-w-5xl lg:grid lg:grid-cols-12 lg:bg-white lg:rounded-3xl lg:shadow-2xl overflow-hidden relative">
+        
+        {/* Desktop Left Panel */}
+        <div className="hidden lg:flex lg:col-span-5 bg-[#F97316] flex-col items-center justify-center p-12 relative overflow-hidden text-white">
+          <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
+          <div className="relative z-10 w-full text-center">
+            <div className="w-24 h-24 bg-white/20 backdrop-blur-md rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-xl">
+              <span className="text-white font-black text-4xl">IP</span>
+            </div>
+            <h1 className="text-3xl font-black mb-4">Bergabung Bersama Kami</h1>
+            <p className="text-orange-100 text-sm mb-8 leading-relaxed">Jadilah agen InoviStore dan mulai usaha digitalmu sekarang. Transaksi mudah, margin menguntungkan!</p>
+            
+            <div className="bg-white/10 rounded-2xl p-5 backdrop-blur-sm text-left">
+              <div className="flex items-center gap-3 mb-3">
+                <CheckSquare className="text-orange-200 w-5 h-5" />
+                <span className="font-semibold text-sm">Pendaftaran Gratis 100%</span>
+              </div>
+              <div className="flex items-center gap-3 mb-3">
+                <CheckSquare className="text-orange-200 w-5 h-5" />
+                <span className="font-semibold text-sm">Harga Dasar Termurah</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <CheckSquare className="text-orange-200 w-5 h-5" />
+                <span className="font-semibold text-sm">Aktivasi Instan via WhatsApp</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="bg-white py-8 px-6 shadow-xl rounded-2xl border border-gray-100">
-          <form className="space-y-5" onSubmit={handleSubmit}>
-            {/* Nama */}
-            <div>
-              <label className="label">Nama Lengkap Sesuai KTP</label>
-              <input type="text" className={`input ${touched.name && !validations.name ? 'border-red-500' : ''}`}
-                placeholder="Budi Santoso" value={form.name} 
-                onChange={e => setForm({ ...form, name: e.target.value })}
-                onBlur={() => handleBlur('name')} />
-              {touched.name && !validations.name && <p className="text-xs text-red-500 mt-1">Nama minimal 3 karakter</p>}
+        {/* Form Panel */}
+        <div className="w-full lg:col-span-7 relative z-10 h-full max-h-[90vh] overflow-y-auto custom-scrollbar">
+          {/* Header mobile */}
+          <div className="text-center py-8 px-6 lg:hidden">
+            <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <span className="text-white font-black text-2xl">IP</span>
             </div>
+            <h1 className="text-2xl font-black text-white">Daftar Agen</h1>
+            <p className="text-orange-100 text-sm mt-1">Mulai usaha digital dari rumah</p>
+          </div>
 
-            {/* Email */}
-            <div>
-              <label className="label">Alamat Email</label>
-              <input type="email" className={`input ${touched.email && !validations.email ? 'border-red-500' : ''}`}
-                placeholder="budi@example.com" value={form.email} 
-                onChange={e => setForm({ ...form, email: e.target.value })}
-                onBlur={() => handleBlur('email')} />
-              {touched.email && !validations.email && <p className="text-xs text-red-500 mt-1">Format email tidak valid</p>}
-            </div>
-
-            {/* Phone */}
-            <div>
-              <label className="label">No WhatsApp Aktif</label>
-              <input type="tel" className={`input ${touched.phone && !validations.phone ? 'border-red-500' : ''}`}
-                placeholder="081234567890" value={form.phone} 
-                onChange={e => setForm({ ...form, phone: e.target.value })}
-                onBlur={() => handleBlur('phone')} />
-              {touched.phone && !validations.phone && <p className="text-xs text-red-500 mt-1">Gunakan awalan 08 (10-14 digit)</p>}
-            </div>
-
-            {/* Password */}
-            <div>
-              <label className="label">Password Akun</label>
-              <div className="relative">
-                <input type={showPw ? "text" : "password"} className={`input pr-10 ${touched.password && !validations.password ? 'border-red-500' : ''}`}
-                  placeholder="Minimal 8 karakter" value={form.password} 
-                  onChange={e => setForm({ ...form, password: e.target.value })}
-                  onBlur={() => handleBlur('password')} />
-                <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-3 text-gray-400 hover:text-gray-600">
-                  {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
+          <div className="bg-white rounded-t-3xl lg:rounded-none p-6 lg:p-10">
+            <h2 className="text-2xl font-black text-gray-900 mb-6 hidden lg:block">Form Pendaftaran</h2>
+            
+            <form onSubmit={handleSubmit} className="space-y-5">
               
-              {form.password && (
-                <div className="flex gap-1 mt-2">
-                  {[1,2,3,4].map(level => (
-                    <div key={level} className={`h-1.5 w-full rounded-full ${getPasswordStrength() >= level ? (getPasswordStrength() > 2 ? 'bg-green-500' : 'bg-amber-500') : 'bg-gray-200'}`} />
-                  ))}
+              {/* Profil Singkat */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="label">Nama Lengkap</label>
+                  <div className="relative group">
+                    <User className="absolute left-3.5 top-3.5 w-5 h-5 text-gray-400 group-focus-within:text-[#F97316] transition-colors" />
+                    <input type="text" className="input pl-11" placeholder="Sesuai KTP" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
+                  </div>
                 </div>
-              )}
-              {touched.password && !validations.password && <p className="text-xs text-red-500 mt-1">Minimal 8 karakter</p>}
-            </div>
+                <div>
+                  <label className="label">Nama Toko</label>
+                  <div className="relative group">
+                    <Store className="absolute left-3.5 top-3.5 w-5 h-5 text-gray-400 group-focus-within:text-[#F97316] transition-colors" />
+                    <input type="text" className="input pl-11" placeholder="Cth: Budi Cell" value={form.storeName} onChange={e => setForm({ ...form, storeName: e.target.value })} required />
+                  </div>
+                </div>
+              </div>
 
-            {/* Confirm Password */}
-            <div>
-              <label className="label">Konfirmasi Password</label>
-              <input type={showPw ? "text" : "password"} className={`input ${touched.confirmPassword && !validations.confirmPassword ? 'border-red-500' : ''}`}
-                placeholder="Ulangi password" value={form.confirmPassword} 
-                onChange={e => setForm({ ...form, confirmPassword: e.target.value })}
-                onBlur={() => handleBlur('confirmPassword')} />
-              {touched.confirmPassword && !validations.confirmPassword && <p className="text-xs text-red-500 mt-1">Password tidak cocok</p>}
-            </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="label">Email</label>
+                  <div className="relative group">
+                    <Mail className="absolute left-3.5 top-3.5 w-5 h-5 text-gray-400 group-focus-within:text-[#F97316] transition-colors" />
+                    <input type="email" className="input pl-11" placeholder="email@example.com" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required />
+                  </div>
+                </div>
+                <div>
+                  <label className="label">Nomor WhatsApp</label>
+                  <div className="relative group">
+                    <Phone className="absolute left-3.5 top-3.5 w-5 h-5 text-gray-400 group-focus-within:text-[#F97316] transition-colors" />
+                    <input type="tel" className="input pl-11" placeholder="08123456789" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} required />
+                  </div>
+                  <p className="text-[10px] text-gray-400 mt-1">OTP akan dikirim ke nomor ini.</p>
+                </div>
+              </div>
 
-            {/* Referral Code */}
-            <div>
-              <label className="label flex items-center gap-2">
-                Kode Referral (Opsional)
-              </label>
-              <input type="text" className="input uppercase"
-                placeholder="Contoh: INOVI123" value={form.referralCode}
-                onChange={e => setForm({ ...form, referralCode: e.target.value.toUpperCase() })} />
-            </div>
+              <hr className="border-gray-100" />
 
-            {/* ToS Checkbox */}
-            <label className="flex items-start gap-3 cursor-pointer select-none">
-              <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)}
-                className="mt-1 w-4 h-4 text-amber-500 border-gray-300 rounded focus:ring-amber-500 cursor-pointer" />
-              <span className="text-sm text-gray-600">
-                Saya menyetujui <Link href="/terms" className="text-amber-600 font-medium hover:underline">Syarat & Ketentuan</Link> dan <Link href="/privacy" className="text-amber-600 font-medium hover:underline">Kebijakan Privasi</Link> InoviPay.
-              </span>
-            </label>
+              {/* Wilayah */}
+              <h3 className="font-bold text-gray-900 text-sm">Alamat Lengkap</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="label">Provinsi</label>
+                  <select className="input cursor-pointer" required value={selectedProvId} onChange={e => {
+                    const id = e.target.value;
+                    const nama = provinsis.find(p => p.id === id)?.nama || '';
+                    setSelectedProvId(id);
+                    setForm({ ...form, provinsi: nama });
+                  }}>
+                    <option value="">Pilih Provinsi</option>
+                    {provinsis.map(p => <option key={p.id} value={p.id}>{p.nama}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="label">Kabupaten / Kota</label>
+                  <select className="input cursor-pointer" required disabled={!selectedProvId} value={selectedKabId} onChange={e => {
+                    const id = e.target.value;
+                    const nama = kabupatens.find(k => k.id === id)?.nama || '';
+                    setSelectedKabId(id);
+                    setForm({ ...form, kabupaten: nama });
+                  }}>
+                    <option value="">Pilih Kabupaten/Kota</option>
+                    {kabupatens.map(k => <option key={k.id} value={k.id}>{k.nama}</option>)}
+                  </select>
+                </div>
+              </div>
 
-            <button type="submit" disabled={loading || !allValid} 
-              className={`w-full py-3 px-4 flex justify-center items-center gap-2 rounded-xl text-white font-bold transition-all
-                ${loading || !allValid ? 'bg-gray-300 cursor-not-allowed' : 'bg-amber-500 hover:bg-amber-600 shadow-md hover:shadow-lg'}`}>
-              <ShieldCheck className="w-5 h-5" />
-              {loading ? 'Memproses...' : 'Daftar Sekarang'}
-            </button>
-          </form>
+              <div>
+                <label className="label">Kecamatan</label>
+                <select className="input cursor-pointer" required disabled={!selectedKabId} value={form.kecamatan} onChange={e => setForm({ ...form, kecamatan: e.target.value })}>
+                  <option value="">Pilih Kecamatan</option>
+                  {kecamatans.map(k => <option key={k.id} value={k.nama}>{k.nama}</option>)}
+                </select>
+              </div>
 
-          <div className="mt-6 text-center text-sm text-gray-600">
-            Sudah punya akun?{' '}
-            <Link href="/auth/login" className="font-bold text-amber-600 hover:text-amber-700">Masuk di sini</Link>
+              <div>
+                <label className="label">Alamat Detail</label>
+                <div className="relative group">
+                  <MapPin className="absolute left-3.5 top-3.5 w-5 h-5 text-gray-400 group-focus-within:text-[#F97316] transition-colors" />
+                  <input type="text" className="input pl-11" placeholder="Nama Jalan, RT/RW, Kelurahan" value={form.alamat} onChange={e => setForm({ ...form, alamat: e.target.value })} required />
+                </div>
+              </div>
+
+              <hr className="border-gray-100" />
+
+              {/* PIN & Referral */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="label">PIN</label>
+                  <div className="relative group">
+                    <Lock className="absolute left-3.5 top-3.5 w-5 h-5 text-gray-400 group-focus-within:text-[#F97316] transition-colors" />
+                    <input type={showPw ? 'text' : 'password'} inputMode="numeric" maxLength={6} className="input pl-11 pr-10 font-mono tracking-wider" placeholder="6 Digit Angka"
+                      value={form.pin} onChange={e => setForm({ ...form, pin: e.target.value.replace(/\D/g, '') })} required />
+                    <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-3.5">
+                      {showPw ? <EyeOff className="w-5 h-5 text-gray-400" /> : <Eye className="w-5 h-5 text-gray-400" />}
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label className="label">Konfirmasi PIN</label>
+                  <div className="relative group">
+                    <Lock className="absolute left-3.5 top-3.5 w-5 h-5 text-gray-400 group-focus-within:text-[#F97316] transition-colors" />
+                    <input type={showConfirmPw ? 'text' : 'password'} inputMode="numeric" maxLength={6} className="input pl-11 pr-10 font-mono tracking-wider" placeholder="Ulangi 6 Digit PIN"
+                      value={form.confirmPin} onChange={e => setForm({ ...form, confirmPin: e.target.value.replace(/\D/g, '') })} required />
+                    <button type="button" onClick={() => setShowConfirmPw(!showConfirmPw)} className="absolute right-3 top-3.5">
+                      {showConfirmPw ? <EyeOff className="w-5 h-5 text-gray-400" /> : <Eye className="w-5 h-5 text-gray-400" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="label">Kode Referral <span className="text-gray-400 font-normal">(Opsional)</span></label>
+                <div className="relative group">
+                  <Gift className="absolute left-3.5 top-3.5 w-5 h-5 text-gray-400 group-focus-within:text-[#FF6B35] transition-colors" />
+                  <input type="text" className="input pl-11 uppercase" placeholder="Masukkan kode referral"
+                    value={form.referralCode} onChange={e => setForm({ ...form, referralCode: e.target.value.toUpperCase() })} />
+                </div>
+              </div>
+
+              {/* Syarat & Ketentuan */}
+              <div className="pt-2">
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <div className="relative flex items-center justify-center mt-0.5">
+                    <input type="checkbox" className="peer appearance-none w-5 h-5 border-2 border-gray-300 rounded focus:ring-2 focus:ring-[#F97316]/20 checked:border-[#F97316] checked:bg-[#F97316] transition-all cursor-pointer" 
+                      checked={agreed} onChange={e => setAgreed(e.target.checked)} />
+                    <CheckSquare className="absolute w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity" />
+                  </div>
+                  <span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">
+                    Saya menyetujui <Link href="/terms" className="text-[#F97316] font-semibold hover:underline">Syarat & Ketentuan</Link> serta <Link href="/privacy" className="text-[#F97316] font-semibold hover:underline">Kebijakan Privasi</Link> InoviStore.
+                  </span>
+                </label>
+              </div>
+
+              <button type="submit" disabled={loading} className="btn-primary w-full py-4 text-base shadow-lg shadow-[#F97316]/20 mt-4">
+                {loading ? 'Mendaftarkan...' : 'Daftar Sekarang'}
+              </button>
+            </form>
+
+            <p className="text-center text-sm text-gray-500 mt-6 pb-6 lg:pb-0">
+              Sudah punya akun?{' '}
+              <Link href="/auth/login" className="text-[#FF6B35] font-bold hover:underline">Masuk di sini</Link>
+            </p>
           </div>
         </div>
       </div>

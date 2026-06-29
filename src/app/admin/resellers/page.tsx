@@ -30,8 +30,16 @@ export default function ResellersPage() {
 
   async function handleAction() {
     try {
-      await api.patch(`/admin/resellers/${modal.reseller.id}`, { status: modal.action === 'activate' ? 'ACTIVE' : 'SUSPENDED' })
-      toast.success(modal.action === 'activate' ? 'Reseller diaktifkan' : 'Reseller disuspend')
+      if (modal.action === 'reset_session') {
+        await api.patch(`/admin/resellers/${modal.reseller.id}`, { action: 'RESET_SESSION' })
+        toast.success('Sesi perangkat berhasil direset')
+      } else if (modal.action === 'delete') {
+        await api.delete(`/admin/resellers/${modal.reseller.id}`)
+        toast.success('Akun reseller berhasil dihapus permanen')
+      } else {
+        await api.patch(`/admin/resellers/${modal.reseller.id}`, { status: modal.action === 'activate' ? 'ACTIVE' : 'SUSPENDED' })
+        toast.success(modal.action === 'activate' ? 'Reseller diaktifkan' : 'Reseller disuspend')
+      }
       setModal({ open: false, reseller: null, action: '' })
       fetchResellers()
     } catch (err: any) {
@@ -93,6 +101,10 @@ export default function ResellersPage() {
                           <button onClick={() => setModal({ open: true, reseller: r, action: 'suspend' })}
                             className="text-xs bg-red-100 text-red-700 hover:bg-red-200 px-2 py-1 rounded">Suspend</button>
                         )}
+                        <button onClick={() => setModal({ open: true, reseller: r, action: 'reset_session' })}
+                          className="text-xs bg-orange-100 text-orange-700 hover:bg-orange-200 px-2 py-1 rounded">Reset Perangkat</button>
+                        <button onClick={() => setModal({ open: true, reseller: r, action: 'delete' })}
+                          className="text-xs bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-red-700 px-2 py-1 rounded transition-colors">Hapus</button>
                       </div>
                     </td>
                   </tr>
@@ -105,10 +117,10 @@ export default function ResellersPage() {
 
       <ConfirmModal
         isOpen={modal.open}
-        title={modal.action === 'activate' ? 'Aktifkan Reseller?' : 'Suspend Reseller?'}
-        message={`${modal.action === 'activate' ? 'Aktifkan' : 'Suspend'} akun ${modal.reseller?.name}?`}
-        confirmLabel={modal.action === 'activate' ? 'Aktifkan' : 'Suspend'}
-        danger={modal.action === 'suspend'}
+        title={modal.action === 'activate' ? 'Aktifkan Reseller?' : modal.action === 'reset_session' ? 'Reset Perangkat?' : modal.action === 'delete' ? 'Hapus Akun Permanen?' : 'Suspend Reseller?'}
+        message={modal.action === 'reset_session' ? `Reset sesi login untuk akun ${modal.reseller?.name}? Ini akan memaksa logout mereka.` : modal.action === 'delete' ? `Hapus akun ${modal.reseller?.name} secara permanen beserta saldo dan seluruh riwayat transaksinya? Tindakan ini tidak dapat dibatalkan.` : `${modal.action === 'activate' ? 'Aktifkan' : 'Suspend'} akun ${modal.reseller?.name}?`}
+        confirmLabel={modal.action === 'activate' ? 'Aktifkan' : modal.action === 'reset_session' ? 'Reset' : modal.action === 'delete' ? 'Hapus' : 'Suspend'}
+        danger={modal.action === 'suspend' || modal.action === 'delete'}
         onConfirm={handleAction}
         onCancel={() => setModal({ open: false, reseller: null, action: '' })}
       />

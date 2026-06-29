@@ -52,7 +52,7 @@ export default function InstallPwaButton({ className = '' }: { className?: strin
       className={`flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-4 rounded-full transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-lg border-2 border-blue-600 ${className}`}
     >
       <Download className="w-6 h-6 animate-bounce" />
-      Install Aplikasi InoviPay
+      Install Aplikasi InoviStore
     </button>
   )
 }

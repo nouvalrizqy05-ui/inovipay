@@ -1,175 +1,145 @@
-# INOVIPAY - PPOB Platform
+# InoviPay — Platform PPOB & Server Pulsa
 
-Platform reseller pulsa, data, token PLN, PDAM, top up game paling lengkap.
-
----
-
-## Tech Stack
-
-| Layer | Teknologi |
-|---|---|
-| Framework | Next.js 14 (App Router) |
-| Database | PostgreSQL |
-| ORM | Prisma |
-| Auth | JWT via jose |
-| Supplier API | Digiflazz H2H |
-| Notifikasi WA | Fonnte (opsional) |
+Platform reseller digital lengkap: pulsa, paket data, token PLN, PDAM, top up game, tagihan pascabayar, dan lainnya. Berbasis Next.js 14, PostgreSQL, Prisma, dan Digiflazz H2H API.
 
 ---
 
-## Setup Awal
+## ✨ Fitur Lengkap
+
+### 📱 Mobile App (Reseller)
+- **Dashboard** — saldo real-time, statistik harian, grafik keuntungan 7 hari, quick menu lengkap
+- **Transaksi** — prabayar & pascabayar, PIN keamanan 6 digit, struk digital shareable via WhatsApp
+- **Deposit** — multi metode (Bank Transfer, VA, QRIS, ShopeePay, OVO), quick amount button
+- **Wallet** — mutasi saldo lengkap dengan ledger masuk/keluar
+- **Kasir Digital** — input manual item, cetak/share struk via WhatsApp
+- **Catatan** — simpan catatan bisnis personal
+- **Promo** — banner promo dinamis dari admin
+- **Official** — tutorial, kontak CS, dokumen legal
+- **Profil** — setup PIN, ganti password, info tier, poin reward, referral code
+
+### 🏠 Panel Admin
+- **Dashboard** — statistik platform, alert saldo Digiflazz, shortcut aksi cepat, grafik 7 hari
+- **Reseller** — aktivasi/suspend, cari & filter, lihat saldo per reseller
+- **Deposit** — approve/reject dengan catatan, notifikasi WA otomatis ke reseller
+- **Transaksi** — lihat semua transaksi, filter status, lihat margin per transaksi
+- **Produk** — tambah manual + sync dari Digiflazz dengan margin otomatis
+- **Banner** — kelola banner promo, aktif/nonaktif, urutan tampilan
+- **Konfigurasi** — threshold saldo, rekening bank, nama platform, minimum deposit
+
+### 🔐 Keamanan
+- PIN 6 digit wajib sebelum setiap transaksi
+- JWT authentication dengan expiry 7 hari
+- Rate limiting di middleware
+- HMAC-MD5 signature verifikasi webhook Digiflazz
+- Balance hold mencegah double-spend
+
+### 💎 Sistem Bisnis
+- Tier harga: Reseller → Agen → Master Dealer (harga berbeda per tier)
+- Poin reward: 1 poin per Rp 1.000 margin, otomatis dihitung saat transaksi
+- Referral code: auto-generate saat register, bonus untuk referrer
+- Notifikasi WhatsApp via Fonnte (opsional)
+- Alert saldo Digiflazz otomatis ke admin (threshold bisa diatur)
+
+---
+
+## 🚀 Setup
 
 ### 1. Install dependencies
 ```bash
 npm install
 ```
 
-### 2. Setup environment
+### 2. Environment variables
 ```bash
 cp .env.example .env
-# Edit .env — isi semua variabel yang dibutuhkan
+# Edit .env — isi DATABASE_URL, JWT_SECRET minimal
 ```
 
-### 3. Generate JWT Secret
+Generate JWT Secret:
 ```bash
 openssl rand -base64 32
-# Copy hasilnya ke JWT_SECRET di .env
 ```
 
-### 4. Setup database
+### 3. Database
 ```bash
 npm run db:generate   # Generate Prisma client
 npm run db:migrate    # Buat semua tabel
-npm run db:seed       # Buat admin pertama + config default
+npm run db:seed       # Buat admin + config default + banner contoh
 ```
 
-### 5. Jalankan
+### 4. Jalankan
 ```bash
-npm run dev           # http://localhost:3000
+npm run dev
+# http://localhost:3000
+```
+
+Login admin: cek output `npm run db:seed` atau lihat `.env` (ADMIN_EMAIL / ADMIN_PASSWORD)
+
+---
+
+## 🗂️ Struktur API
+
+| Endpoint | Metode | Akses | Fungsi |
+|---|---|---|---|
+| `/api/auth/login` | POST | Public | Login |
+| `/api/auth/register` | POST | Public | Daftar reseller + referral |
+| `/api/auth/set-pin` | POST | Auth | Set/ubah PIN transaksi |
+| `/api/auth/verify-pin` | POST | Auth | Verifikasi PIN sebelum transaksi |
+| `/api/auth/forgot-password` | POST | Public | Reset password via WA |
+| `/api/reseller/dashboard` | GET | Reseller | Dashboard data + poin + recent tx |
+| `/api/reseller/products` | GET | Reseller | Produk dengan harga sesuai tier |
+| `/api/reseller/profile` | GET/PATCH | Reseller | Profil + hasPIN + tier + poin |
+| `/api/reseller/report` | GET | Reseller | Laporan periode (today/week/month) |
+| `/api/transactions` | GET/POST | Auth | Transaksi + poin otomatis |
+| `/api/transactions/receipt/:id` | GET | Auth | Data struk digital |
+| `/api/deposits` | GET/POST | Reseller | Deposit saldo |
+| `/api/wallet` | GET | Reseller | Saldo + ledger mutasi |
+| `/api/favorites` | GET/POST | Auth | Nomor favorit |
+| `/api/catatan` | GET/POST | Auth | Catatan personal |
+| `/api/notifications` | GET/PATCH | Auth | Notifikasi + mark read |
+| `/api/admin/dashboard` | GET | Admin | Statistik platform |
+| `/api/admin/resellers` | GET | Admin | Daftar reseller |
+| `/api/admin/resellers/:id` | PATCH | Admin | Aktivasi/suspend |
+| `/api/admin/deposits` | GET | Admin | Deposit pending |
+| `/api/admin/deposits/:id` | PATCH | Admin | Approve/reject deposit |
+| `/api/admin/products` | GET/POST | Admin | Produk |
+| `/api/admin/products/sync` | POST | Admin | Sync dari Digiflazz |
+| `/api/admin/banners` | GET/POST | Auth/Admin | Banner promo |
+| `/api/admin/banners/:id` | PATCH/DELETE | Admin | Edit/hapus banner |
+| `/api/admin/config` | GET/PATCH | Admin | Konfigurasi sistem |
+| `/api/webhook/digiflazz` | POST | Digiflazz | Callback transaksi |
+
+---
+
+## 📱 Design System
+- Mobile-first: layout khusus mobile dengan bottom navigation (seperti MyKonter)
+- Desktop: sidebar navigation
+- Warna utama: `#00B4A0` (teal), `#FF6B35` (orange accent)
+- Font: Inter
+- Komponen: Tailwind CSS + custom classes
+
+---
+
+## ⚙️ Environment Variables
+
+```env
+DATABASE_URL="postgresql://..."
+JWT_SECRET="random-32-char-string"
+DIGIFLAZZ_USERNAME="username"
+DIGIFLAZZ_API_KEY_DEV="dev-xxx"
+DIGIFLAZZ_API_KEY_PROD="prod-xxx"
+NODE_ENV="development"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+ADMIN_EMAIL="admin@inovipay.id"
+ADMIN_PASSWORD="Admin123456!"
+FONNTE_TOKEN=""  # WhatsApp notifications (opsional)
 ```
 
 ---
 
-## Struktur API Lengkap
+## 🔗 Webhook Digiflazz
 
-### Auth
-| Method | Endpoint | Akses | Deskripsi |
-|---|---|---|---|
-| POST | `/api/auth/register` | Public | Daftar reseller baru |
-| POST | `/api/auth/login` | Public | Login, dapat JWT |
-| POST | `/api/auth/logout` | Auth | Logout |
-| POST | `/api/auth/forgot-password` | Public | Kirim kode reset via WA |
-| POST | `/api/auth/reset-password` | Public | Reset password dengan kode |
-
-### Reseller
-| Method | Endpoint | Akses | Deskripsi |
-|---|---|---|---|
-| GET | `/api/reseller/dashboard` | Reseller | Statistik + saldo + grafik |
-| GET | `/api/reseller/profile` | Reseller | Data profil |
-| PATCH | `/api/reseller/profile` | Reseller | Update nama / password |
-
-### Produk
-| Method | Endpoint | Akses | Deskripsi |
-|---|---|---|---|
-| GET | `/api/products` | Auth | Daftar produk aktif |
-| POST | `/api/products` | Admin | Tambah produk manual |
-| POST | `/api/products/sync` | Admin | Sync produk dari Digiflazz |
-
-### Transaksi
-| Method | Endpoint | Akses | Deskripsi |
-|---|---|---|---|
-| POST | `/api/transactions` | Reseller | Buat transaksi baru |
-| GET | `/api/transactions` | Auth | Riwayat (reseller: milik sendiri, admin: semua) |
-
-### Wallet & Deposit
-| Method | Endpoint | Akses | Deskripsi |
-|---|---|---|---|
-| GET | `/api/wallet` | Reseller | Saldo + mutasi |
-| POST | `/api/deposits` | Reseller | Ajukan deposit |
-| GET | `/api/deposits` | Reseller | Riwayat deposit |
-
-### Admin
-| Method | Endpoint | Akses | Deskripsi |
-|---|---|---|---|
-| GET | `/api/admin/dashboard` | Admin | Statistik platform + saldo Digiflazz |
-| GET | `/api/admin/resellers` | Admin | Daftar reseller |
-| PATCH | `/api/admin/resellers/[id]` | Admin | Aktivasi/suspend reseller |
-| GET | `/api/admin/deposits` | Admin | Daftar deposit pending |
-| PATCH | `/api/admin/deposits/[id]` | Admin | Approve/reject deposit |
-| GET | `/api/admin/config` | Admin | Konfigurasi sistem + saldo Digiflazz |
-| PATCH | `/api/admin/config` | Admin | Update konfigurasi |
-
-### Webhook & Notifikasi
-| Method | Endpoint | Akses | Deskripsi |
-|---|---|---|---|
-| POST | `/api/webhook/digiflazz` | Digiflazz | Callback status transaksi |
-| GET | `/api/notifications` | Auth | Daftar notifikasi |
-| PATCH | `/api/notifications` | Auth | Tandai semua sudah dibaca |
-
----
-
-## Alur Bisnis Lengkap
-
-### Reseller baru
+Setelah deploy, set callback URL di dashboard Digiflazz:
 ```
-Daftar → Status PENDING → Admin aktivasi → Status ACTIVE → Bisa transaksi
+https://domain-kamu.com/api/webhook/digiflazz
 ```
-
-### Deposit saldo
-```
-Reseller transfer ke rekening admin
-→ Upload bukti di platform
-→ Admin approve
-→ Saldo reseller bertambah otomatis
-```
-
-### Transaksi
-```
-Reseller pilih produk + isi nomor tujuan
-→ Sistem cek saldo reseller
-→ Sistem cek saldo Digiflazz (alert admin kalau menipis)
-→ Hold saldo reseller
-→ Kirim order ke Digiflazz
-→ Sukses: potong saldo, kirim notifikasi WA
-→ Gagal: lepas hold, notifikasi WA
-→ Pending: tunggu callback webhook
-```
-
-### Saldo Digiflazz (admin)
-```
-Admin top up saldo Digiflazz manual via dashboard Digiflazz
-→ Sistem otomatis alert kalau saldo < threshold (default Rp 500rb)
-→ Threshold bisa diubah di /api/admin/config
-```
-
----
-
-## Setup Webhook di Digiflazz
-
-Setelah deploy ke server dengan domain/IP publik:
-
-1. Masuk dashboard Digiflazz → Atur Koneksi → API
-2. Isi Callback URL:
-   ```
-   https://domain-kamu.com/api/webhook/digiflazz
-   ```
-
----
-
-## Notifikasi WhatsApp (Fonnte)
-
-1. Daftar di [fonnte.com](https://fonnte.com)
-2. Hubungkan nomor WhatsApp
-3. Copy token ke `FONNTE_TOKEN` di `.env`
-
-Kalau `FONNTE_TOKEN` tidak diisi, notifikasi WA dinonaktifkan otomatis — tidak error.
-
----
-
-## Catatan Keamanan
-
-- File `.env` sudah di `.gitignore` — jangan pernah commit
-- `balance_hold` mencegah double-spend saat transaksi pending
-- Semua operasi wallet pakai `prisma.$transaction()` — atomic
-- Webhook Digiflazz diverifikasi via HMAC signature
-- Alert saldo rendah ada rate limit 1 jam — tidak spam ke admin

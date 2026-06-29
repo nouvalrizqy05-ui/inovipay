@@ -5,8 +5,8 @@ import { useState } from 'react'
 
 export default function FloatingWhatsApp() {
   const [showTooltip, setShowTooltip] = useState(true)
-  const waNumber = '6283836487767' // Nomor WA CS asli InoviPay
-  const waMessage = encodeURIComponent('Halo InoviPay! Saya tertarik menjadi Mitra Inovi. Bisa info lebih lanjut?')
+  const waNumber = '6283836487767' // Nomor WA CS asli InoviStore
+  const waMessage = encodeURIComponent('Halo InoviStore! Saya tertarik menjadi Mitra Inovi. Bisa info lebih lanjut?')
   const waUrl = `https://wa.me/${waNumber}?text=${waMessage}`
 
   return (

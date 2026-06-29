@@ -4,45 +4,84 @@ import Loading from '@/components/ui/loading'
 import Empty from '@/components/ui/empty'
 import api from '@/lib/api-client'
 import { formatRupiah, formatDate } from '@/lib/utils'
+import { ChevronLeft, ChevronRight, TrendingUp, TrendingDown } from 'lucide-react'
 
 export default function WalletPage() {
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const limit = 20
 
-  useEffect(() => { api.get('/wallet').then(r => setData(r.data)).finally(() => setLoading(false)) }, [])
+  useEffect(() => {
+    api.get(`/wallet?page=${page}&limit=${limit}`).then(r => setData(r.data)).finally(() => setLoading(false))
+  }, [page])
 
   if (loading) return <Loading />
 
+  const totalPages = Math.ceil((data?.total ?? 0) / limit)
+
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Mutasi Saldo</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {[
-          { label: 'Total Saldo', value: data?.balance ?? 0, color: 'text-blue-600' },
-          { label: 'Saldo Ditahan', value: data?.balanceHold ?? 0, color: 'text-yellow-600' },
-          { label: 'Saldo Tersedia', value: data?.available ?? 0, color: 'text-green-600' },
-        ].map(s => (
-          <div key={s.label} className="card text-center">
-            <p className="text-sm text-gray-500">{s.label}</p>
-            <p className={`text-2xl font-bold mt-1 ${s.color}`}>{formatRupiah(s.value)}</p>
+    <div className="space-y-4">
+      <h1 className="text-xl font-black text-gray-900">Riwayat Saldo</h1>
+
+      {/* Saldo summary */}
+      <div className="saldo-card">
+        <p className="text-teal-100 text-xs mb-1">Saldo Tersedia</p>
+        <p className="text-3xl font-black">{formatRupiah(data?.available ?? 0)}</p>
+        <div className="flex gap-6 mt-3 text-xs">
+          <div>
+            <p className="text-teal-200">Total Saldo</p>
+            <p className="font-bold">{formatRupiah(data?.balance ?? 0)}</p>
           </div>
-        ))}
+          <div>
+            <p className="text-teal-200">Ditahan</p>
+            <p className="font-bold">{formatRupiah(data?.balanceHold ?? 0)}</p>
+          </div>
+        </div>
       </div>
+
+      {/* Ledger */}
       <div className="card">
-        <h2 className="font-semibold text-gray-900 mb-4">Riwayat Mutasi</h2>
-        {!data?.ledger?.length ? <Empty text="Belum ada mutasi" /> : (
+        <p className="font-bold text-sm text-gray-900 mb-3">Mutasi Saldo</p>
+        {!data?.ledger?.length ? (
+          <Empty text="Belum ada mutasi saldo" />
+        ) : (
           <div className="space-y-2">
             {data.ledger.map((l: any) => (
-              <div key={l.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">{l.note}</p>
-                  <p className="text-xs text-gray-500">{formatDate(l.createdAt)}</p>
+              <div key={l.id} className="flex items-center gap-3 py-3 border-b border-gray-50 last:border-0">
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                  l.type === 'CREDIT' ? 'bg-emerald-50' : 'bg-red-50'
+                }`}>
+                  {l.type === 'CREDIT'
+                    ? <TrendingUp className="w-4 h-4 text-emerald-600" />
+                    : <TrendingDown className="w-4 h-4 text-red-500" />
+                  }
                 </div>
-                <p className={`text-sm font-bold ${l.type === 'CREDIT' ? 'text-green-600' : 'text-red-600'}`}>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-gray-900 truncate">{l.note}</p>
+                  <p className="text-[10px] text-gray-400">{formatDate(l.createdAt)}</p>
+                </div>
+                <p className={`text-sm font-black flex-shrink-0 ${
+                  l.type === 'CREDIT' ? 'text-emerald-600' : 'text-red-500'
+                }`}>
                   {l.type === 'CREDIT' ? '+' : '-'}{formatRupiah(Number(l.amount))}
                 </p>
               </div>
             ))}
+
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-3">
+                <button onClick={() => setPage(p => Math.max(1,p-1))} disabled={page===1}
+                  className="p-2 bg-gray-50 rounded-xl disabled:opacity-40">
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="text-xs text-gray-500">Hal {page}/{totalPages}</span>
+                <button onClick={() => setPage(p => Math.min(totalPages,p+1))} disabled={page===totalPages}
+                  className="p-2 bg-gray-50 rounded-xl disabled:opacity-40">
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -33,7 +33,7 @@ export default function Features() {
             Kenapa Mitra Inovi <span className="text-amber-500">Pasti Untung?</span>
           </h2>
           <p className="text-lg text-gray-600">
-            Kami merancang InoviPay khusus agar setiap mitra bisa berjualan dengan tenang, memuaskan pelanggan, dan mendapat untung maksimal.
+            Kami merancang InoviStore khusus agar setiap mitra bisa berjualan dengan tenang, memuaskan pelanggan, dan mendapat untung maksimal.
           </p>
         </div>
 

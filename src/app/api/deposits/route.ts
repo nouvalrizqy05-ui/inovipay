@@ -12,10 +12,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Minimal deposit Rp 10.000' }, { status: 400 })
     }
 
-    const uniqueCode = Math.floor(Math.random() * 900) + 100; // 100-999
-
     const deposit = await prisma.deposit.create({
-      data: { userId, amount, uniqueCode, proofUrl, note, status: 'PENDING' },
+      data: { userId, amount, proofUrl, note, status: 'PENDING' },
       include: { user: { select: { name: true } } },
     })
 

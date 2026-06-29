@@ -19,7 +19,7 @@ export default function ProductCatalog() {
             Satu Saldo, <span className="text-amber-500">Ratusan Produk</span>
           </h2>
           <p className="text-lg text-gray-600">
-            Jual semua kebutuhan digital pelanggan Anda — dari pulsa hingga top-up game premium, semuanya ada di InoviPay.
+            Jual semua kebutuhan digital pelanggan Anda — dari pulsa hingga top-up game premium, semuanya ada di InoviStore.
           </p>
         </div>
 

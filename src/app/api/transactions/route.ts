@@ -5,6 +5,18 @@ import { createTransaction } from '@/lib/digiflazz'
 import { checkDigiflazzBalance } from '@/lib/balance-guard'
 import { sendNotification, sendWhatsApp } from '@/lib/notification'
 
+// Hitung poin: 1 poin per Rp 1.000 margin
+function calcPoints(margin: number): number {
+  return Math.floor(margin / 1000)
+}
+
+// Ambil harga produk sesuai tier user
+function getTierPrice(product: any, tier: string): number {
+  if (tier === 'MASTER_DEALER') return Number(product.priceMasterDealer)
+  if (tier === 'AGEN') return Number(product.priceAgen)
+  return Number(product.priceReseller)
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await requireAuth(req)
@@ -14,89 +26,111 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'productId dan targetNumber wajib diisi' }, { status: 400 })
     }
 
-    // Cek status reseller
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: { wallet: true },
     })
-
     if (!user) return NextResponse.json({ error: 'User tidak ditemukan' }, { status: 404 })
-    if (user.status !== 'ACTIVE') {
-      return NextResponse.json({ error: 'Akun belum aktif. Hubungi admin.' }, { status: 403 })
-    }
+    if (user.status !== 'ACTIVE') return NextResponse.json({ error: 'Akun belum aktif. Hubungi admin.' }, { status: 403 })
 
-    // Cek produk
     const product = await prisma.product.findUnique({ where: { id: productId } })
-    if (!product || !product.isActive) {
-      return NextResponse.json({ error: 'Produk tidak tersedia' }, { status: 404 })
-    }
+    if (!product || !product.isActive) return NextResponse.json({ error: 'Produk tidak tersedia' }, { status: 404 })
 
-    // Cek saldo reseller
     const wallet = user.wallet
     if (!wallet) return NextResponse.json({ error: 'Wallet tidak ditemukan' }, { status: 404 })
 
+    // Harga sesuai tier
+    const sellPrice = getTierPrice(product, user.tier)
     const available = Number(wallet.balance) - Number(wallet.balanceHold)
-    if (available < Number(product.sellPrice)) {
-      return NextResponse.json({ error: 'Saldo tidak mencukupi' }, { status: 402 })
-    }
+    if (available < sellPrice) return NextResponse.json({ error: 'Saldo tidak mencukupi' }, { status: 402 })
 
-    // Cek saldo Digiflazz otomatis (admin akan dapat alert kalau menipis)
+    // Cek saldo Digiflazz
     const balanceCheck = await checkDigiflazzBalance(Number(product.costPrice))
-    if (!balanceCheck.ok) {
-      return NextResponse.json({ error: balanceCheck.reason }, { status: 503 })
-    }
+    if (!balanceCheck.ok) return NextResponse.json({ error: balanceCheck.reason }, { status: 503 })
 
-    const margin = Number(product.sellPrice) - Number(product.costPrice)
+    const margin = sellPrice - Number(product.costPrice)
+    const pointsEarned = calcPoints(margin)
     const refId = `TRX-${userId.slice(0, 8)}-${Date.now()}`
 
     // Hold saldo + buat transaksi pending
     const transaction = await prisma.$transaction(async (tx) => {
       await tx.wallet.update({
         where: { userId },
-        data: { balanceHold: { increment: product.sellPrice } },
+        data: { balanceHold: { increment: sellPrice } },
       })
       return tx.transaction.create({
-        data: { userId, productId, targetNumber, costPrice: product.costPrice, sellPrice: product.sellPrice, margin, refIdH2h: refId, status: 'PENDING' },
+        data: {
+          userId, productId, targetNumber,
+          costPrice: product.costPrice,
+          sellPrice, margin, pointsEarned,
+          refIdH2h: refId, status: 'PENDING',
+        },
       })
     })
 
     // Kirim ke Digiflazz
     try {
       const result = await createTransaction({ refId, skuCode: product.skuH2h, customerNo: targetNumber })
-      console.log('[DIGIFLAZZ RESPONSE]', JSON.stringify(result, null, 2))
 
       if (result.status === 'Sukses') {
         await prisma.$transaction(async (tx) => {
+          // Potong saldo
           await tx.wallet.update({
             where: { userId },
-            data: { balance: { decrement: product.sellPrice }, balanceHold: { decrement: product.sellPrice } },
+            data: {
+              balance: { decrement: sellPrice },
+              balanceHold: { decrement: sellPrice },
+            },
           })
+          // Catat ledger
           const w = await tx.wallet.findUnique({ where: { userId } })
-          if (w) await tx.walletLedger.create({ data: { walletId: w.id, amount: product.sellPrice, type: 'DEBIT', note: `Transaksi ${product.name} ke ${targetNumber}` } })
-          await tx.transaction.update({ where: { id: transaction.id }, data: { status: 'SUCCESS', sn: result.sn } })
+          if (w) {
+            await tx.walletLedger.create({
+              data: { walletId: w.id, amount: sellPrice, type: 'DEBIT', note: `Transaksi ${product.name} → ${targetNumber}` }
+            })
+          }
+          // Update transaksi
+          await tx.transaction.update({
+            where: { id: transaction.id },
+            data: { status: 'SUCCESS', sn: result.sn ?? null },
+          })
+          // Tambah poin reward
+          if (pointsEarned > 0) {
+            await tx.user.update({ where: { id: userId }, data: { points: { increment: pointsEarned } } })
+            await tx.pointLedger.create({
+              data: { userId, points: pointsEarned, type: 'EARN', note: `Transaksi ${product.name}` }
+            })
+          }
         })
 
-        await sendNotification(userId, 'TRANSACTION_SUCCESS', 'Transaksi Berhasil ✅',
-          `${product.name} ke ${targetNumber} berhasil. SN: ${result.sn}`)
-        await sendWhatsApp(user.phone, `✅ Transaksi berhasil!\nProduk: ${product.name}\nTujuan: ${targetNumber}\nSN: ${result.sn}`)
+        await sendNotification(userId, 'TRANSACTION_SUCCESS', '✅ Transaksi Berhasil',
+          `${product.name} ke ${targetNumber} berhasil. ${result.sn ? 'SN: ' + result.sn : ''} ${pointsEarned > 0 ? `+${pointsEarned} poin reward!` : ''}`)
+        await sendWhatsApp(user.phone,
+          `✅ *TRANSAKSI BERHASIL*\nProduk: ${product.name}\nNomor: ${targetNumber}\n${result.sn ? 'SN: ' + result.sn + '\n' : ''}Total: Rp ${sellPrice.toLocaleString('id-ID')}\n${pointsEarned > 0 ? `+${pointsEarned} poin reward` : ''}`)
 
-        return NextResponse.json({ message: 'Transaksi berhasil', status: 'SUCCESS', sn: result.sn, transactionId: transaction.id })
+        return NextResponse.json({
+          message: 'Transaksi berhasil',
+          status: 'SUCCESS',
+          sn: result.sn,
+          transactionId: transaction.id,
+          pointsEarned,
+        })
       }
 
       if (result.status === 'Gagal') {
         await prisma.$transaction(async (tx) => {
-          await tx.wallet.update({ where: { userId }, data: { balanceHold: { decrement: product.sellPrice } } })
+          await tx.wallet.update({ where: { userId }, data: { balanceHold: { decrement: sellPrice } } })
           await tx.transaction.update({ where: { id: transaction.id }, data: { status: 'FAILED', failReason: result.message } })
         })
-        await sendNotification(userId, 'TRANSACTION_FAILED', 'Transaksi Gagal ❌', `${product.name} ke ${targetNumber} gagal. ${result.message}`)
-        return NextResponse.json({ error: result.message || 'Transaksi gagal dari supplier' }, { status: 422 })
+        await sendNotification(userId, 'TRANSACTION_FAILED', '❌ Transaksi Gagal', `${product.name} ke ${targetNumber} gagal. ${result.message}`)
+        return NextResponse.json({ error: 'Transaksi gagal', reason: result.message }, { status: 422 })
       }
 
       // Pending — tunggu webhook
       return NextResponse.json({ message: 'Transaksi sedang diproses', status: 'PENDING', transactionId: transaction.id })
 
     } catch (digiError) {
-      await prisma.wallet.update({ where: { userId }, data: { balanceHold: { decrement: product.sellPrice } } })
+      await prisma.wallet.update({ where: { userId }, data: { balanceHold: { decrement: sellPrice } } })
       await prisma.transaction.update({ where: { id: transaction.id }, data: { status: 'FAILED', failReason: 'Gagal terhubung ke supplier' } })
       throw digiError
     }
@@ -115,10 +149,11 @@ export async function GET(req: NextRequest) {
     const page = parseInt(searchParams.get('page') ?? '1')
     const limit = parseInt(searchParams.get('limit') ?? '20')
     const status = searchParams.get('status') ?? undefined
-    const category = searchParams.get('category') ?? undefined
+    const search = searchParams.get('search') ?? undefined
 
     const where: any = role === 'ADMIN' ? {} : { userId }
     if (status) where.status = status
+    if (search) where.targetNumber = { contains: search }
 
     const [transactions, total] = await Promise.all([
       prisma.transaction.findMany({

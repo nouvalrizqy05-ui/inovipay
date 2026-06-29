@@ -5,13 +5,13 @@ export default function Testimonials() {
     {
       name: "Budi Santoso",
       role: "Mahasiswa Semester 5",
-      text: "Iseng-iseng daftar InoviPay buat jualan pulsa & ML ke temen kampus. Eh sekarang malah bisa bayar UKT sendiri. Margin-nya lumayan banget karena harga aslinya murah!",
+      text: "Iseng-iseng daftar InoviStore buat jualan pulsa & ML ke temen kampus. Eh sekarang malah bisa bayar UKT sendiri. Margin-nya lumayan banget karena harga aslinya murah!",
       img: "https://i.pravatar.cc/150?img=11"
     },
     {
       name: "Siti Rahma",
       role: "Karyawan Swasta",
-      text: "Lumayan banget buat sidejob. Temen sekantor pada beli token listrik sama paketan di saya. Aplikasi InoviPay-nya enteng dan transaksinya secepat kilat.",
+      text: "Lumayan banget buat sidejob. Temen sekantor pada beli token listrik sama paketan di saya. Aplikasi InoviStore-nya enteng dan transaksinya secepat kilat.",
       img: "https://i.pravatar.cc/150?img=5"
     },
     {
