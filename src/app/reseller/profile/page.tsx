@@ -21,7 +21,7 @@ export default function ProfilePage() {
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [activeSection, setActiveSection] = useState<'main'|'edit'|'pin'>('main')
+  const [activeSection, setActiveSection] = useState<'main'|'edit'|'pin'|'device'>('main')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
   
