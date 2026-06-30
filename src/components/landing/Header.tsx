@@ -42,8 +42,8 @@ export default function Header() {
             <Link href="/auth/login" className="hidden sm:block text-amber-600 font-bold hover:text-amber-700 px-4 py-2">
               Masuk
             </Link>
-            <Link href="/auth/register" className="bg-amber-500 hover:bg-amber-600 text-white font-bold px-6 py-2.5 rounded-full transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
-              Daftar Mitra Inovi
+            <Link href="/auth/register" className="hidden sm:inline-flex bg-amber-500 hover:bg-amber-600 text-white font-bold px-6 py-2.5 rounded-full transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+              Daftar Mitra
             </Link>
             {/* Mobile hamburger */}
             <button
@@ -73,9 +73,16 @@ export default function Header() {
             ))}
             <hr className="my-2" />
             <Link
+              href="/auth/register"
+              onClick={() => setMobileOpen(false)}
+              className="block px-4 py-3 rounded-lg text-white bg-amber-500 font-bold hover:bg-amber-600 transition-colors text-center shadow-sm"
+            >
+              Daftar Mitra Gratis
+            </Link>
+            <Link
               href="/auth/login"
               onClick={() => setMobileOpen(false)}
-              className="block px-4 py-3 rounded-lg text-amber-600 font-bold hover:bg-amber-50 transition-colors"
+              className="block px-4 py-3 rounded-lg text-amber-600 font-bold hover:bg-amber-50 transition-colors text-center border-2 border-amber-100"
             >
               Masuk
             </Link>

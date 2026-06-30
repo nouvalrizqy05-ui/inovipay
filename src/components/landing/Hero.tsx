@@ -15,27 +15,28 @@ export default function Hero() {
 
           {/* Left Column - Copywriting */}
           <div className="max-w-2xl mb-12 lg:mb-0 relative z-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-100 text-amber-800 font-bold text-sm mb-6 shadow-sm border border-amber-200">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-100 text-amber-800 font-bold text-sm mb-6 shadow-sm border border-amber-200">
               <span className="flex h-2.5 w-2.5 rounded-full bg-amber-500 animate-ping absolute"></span>
               <span className="flex h-2.5 w-2.5 rounded-full bg-amber-500"></span>
-              Peluang Sidejob Terbaik 2026 🔥
+              Aplikasi PPOB & Top Up Game Termurah 2026 🚀
             </div>
 
-            <h1 className="text-4xl lg:text-6xl font-extrabold text-gray-900 leading-[1.1] mb-6 tracking-tight">
-              Lompat Lebih Tinggi, <br /> Raih Penghasilan Tambahan <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-600">Jutaan Rupiah!</span>
+            <h1 className="text-4xl lg:text-6xl font-extrabold text-gray-900 leading-[1.15] mb-6 tracking-tight">
+              Ubah HP Kamu Jadi Mesin <br />
+              Pencetak Uang <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-600">Jutaan Rupiah!</span>
             </h1>
 
             <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-              Bergabunglah menjadi <strong>Mitra Inovi</strong>. Platform keagenan PPOB dan Top-up Game termurah yang dirancang khusus untuk Anda yang mencari <em>side-job</em> menguntungkan, tanpa risiko, dan bisa dikerjakan dari mana saja.
+              Bergabunglah menjadi <strong>Mitra Inovi</strong> sekarang. Dapatkan akses ke ribuan produk digital dengan harga grosir langsung dari pusat. Jualan pulsa, kuota, token listrik, hingga top-up game jadi makin cuan maksimal!
             </p>
 
             <div className="flex flex-col sm:flex-row flex-wrap gap-4 mb-8">
-              <Link href="/auth/register" className="flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-bold px-8 py-4 rounded-full transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-lg">
-                Daftar Sekarang - Gratis
+              <Link href="/auth/register" className="flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black px-8 py-4 rounded-full transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-lg">
+                Daftar Sekarang - Gratis!
                 <ArrowRight className="w-6 h-6" />
               </Link>
-              <Link href="#simulasi" className="flex items-center justify-center bg-white hover:bg-gray-50 text-gray-900 font-bold px-8 py-4 rounded-full transition-all border-2 border-gray-200 shadow-sm text-lg">
-                Lihat Simulasi Profit
+              <Link href="#simulasi" className="flex items-center justify-center bg-white hover:bg-gray-50 text-gray-900 font-bold px-8 py-4 rounded-full transition-all border-2 border-gray-200 shadow-sm hover:border-amber-400 text-lg">
+                Lihat Simulasi Cuan
               </Link>
               <InstallPwaButton className="w-full sm:w-auto" />
             </div>
@@ -46,13 +47,15 @@ export default function Hero() {
                 <img className="w-8 h-8 rounded-full border-2 border-white" src="https://i.pravatar.cc/100?img=2" alt="Mitra" />
                 <img className="w-8 h-8 rounded-full border-2 border-white" src="https://i.pravatar.cc/100?img=3" alt="Mitra" />
               </div>
-              <div className="flex items-center">
-                <Star className="w-4 h-4 text-amber-400 fill-current" />
-                <Star className="w-4 h-4 text-amber-400 fill-current" />
-                <Star className="w-4 h-4 text-amber-400 fill-current" />
-                <Star className="w-4 h-4 text-amber-400 fill-current" />
-                <Star className="w-4 h-4 text-amber-400 fill-current" />
-                <span className="ml-2">Telah dipercaya 10.000+ Mitra Inovi</span>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <div className="flex items-center">
+                  <Star className="w-4 h-4 text-amber-400 fill-current" />
+                  <Star className="w-4 h-4 text-amber-400 fill-current" />
+                  <Star className="w-4 h-4 text-amber-400 fill-current" />
+                  <Star className="w-4 h-4 text-amber-400 fill-current" />
+                  <Star className="w-4 h-4 text-amber-400 fill-current" />
+                </div>
+                <span className="font-semibold text-gray-700">Telah dipercaya <span className="text-amber-600 font-bold">10.000+</span> Mitra seluruh Indonesia</span>
               </div>
             </div>
           </div>
