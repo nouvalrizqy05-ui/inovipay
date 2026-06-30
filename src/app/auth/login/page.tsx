@@ -15,8 +15,16 @@ export default function LoginPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
+
+    // Ensure deviceId exists
+    let deviceId = localStorage.getItem('deviceId')
+    if (!deviceId) {
+      deviceId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15)
+      localStorage.setItem('deviceId', deviceId)
+    }
+
     try {
-      const res = await api.post('/auth/login', form)
+      const res = await api.post('/auth/login', { ...form, deviceId })
       toast.success(res.data.message)
 
       if (res.data.token) {
@@ -42,7 +50,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-[#F97316] via-[#F97316] to-[#C2410C] flex items-end lg:items-center justify-center p-0 lg:p-4 relative">
       
       {/* Tombol Kembali ke Landing Page */}
-      <Link href="/" className="absolute top-6 left-6 lg:top-8 lg:left-8 z-50 flex items-center justify-center w-10 h-10 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full text-white transition-all active:scale-95">
+      <Link href="/" className="absolute top-6 left-6 lg:top-8 lg:left-8 z-40 flex items-center justify-center w-10 h-10 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full text-white transition-all active:scale-95">
         <ArrowLeft className="w-5 h-5" />
       </Link>
 

@@ -6,48 +6,82 @@ import { getPriceList } from '@/lib/digiflazz'
 export async function POST(req: NextRequest) {
   try {
     await requireAdmin(req)
-    const { category, marginReseller, marginAgen, marginMD } = await req.json()
-    const mReseller = marginReseller ?? 2000
-    const mAgen     = marginAgen     ?? 1500
-    const mMD       = marginMD       ?? 1000
+    // Accept sellerName and marginReseller
+    const { category, sellerName, marginReseller = 2000 } = await req.json()
 
-    const priceList = await getPriceList(category)
-    if (!priceList || !Array.isArray(priceList)) {
-      return NextResponse.json({ error: 'Gagal ambil price list dari Digiflazz' }, { status: 502 })
+    let priceList: any[] = []
+    let digiflazzError = ''
+    
+    if (category) {
+      const prepaidRaw = await getPriceList(category, 'prepaid')
+      if (Array.isArray(prepaidRaw)) priceList = priceList.concat(prepaidRaw)
+      else if (prepaidRaw?.message) digiflazzError = prepaidRaw.message
+    } else {
+      const prepaidRaw = await getPriceList(undefined, 'prepaid').catch((e) => e)
+      const pascaRaw = await getPriceList(undefined, 'pasca').catch((e) => e)
+      
+      if (Array.isArray(prepaidRaw)) priceList = priceList.concat(prepaidRaw)
+      else if (prepaidRaw?.message) digiflazzError = prepaidRaw.message
+      
+      if (Array.isArray(pascaRaw)) priceList = priceList.concat(pascaRaw)
+      else if (pascaRaw?.message && !digiflazzError) digiflazzError = pascaRaw.message
+    }
+
+    if (!priceList || priceList.length === 0) {
+      console.error('[SYNC ERROR] Empty priceList response. Digiflazz Error:', digiflazzError)
+      return NextResponse.json({ error: digiflazzError || 'Gagal ambil price list dari Digiflazz (kosong atau diblokir IP)' }, { status: 502 })
     }
 
     let synced = 0, skipped = 0
+    const activeSkuList: string[] = []
 
     for (const item of priceList) {
       if (!item.buyer_sku_code || !item.product_name || !item.price) { skipped++; continue }
-
+      
+      activeSkuList.push(item.buyer_sku_code)
       const cost = Number(item.price)
+      
+      // Hitung harga jual. Jika marginReseller kosong, ambil margin 2000.
+      let margin = 2000
+      if (marginReseller !== undefined && marginReseller !== null && marginReseller !== 0 && !Number.isNaN(Number(marginReseller))) {
+        margin = Number(marginReseller)
+      }
+      const sell = cost + margin
+
       await prisma.product.upsert({
         where: { code: item.buyer_sku_code },
         update: {
           name: item.product_name,
           costPrice: cost,
-          priceReseller: cost + mReseller,
-          priceAgen: cost + mAgen,
-          priceMasterDealer: cost + mMD,
-          skuH2h: item.buyer_sku_code,
+          // Harga jual diupdate otomatis sesuai margin. 
+          // Jika mau tidak diupdate, bisa pakai update harga manual di admin. Tapi user minta margin bisa diatur saat sync.
+          priceReseller: sell, 
+          isActive: true,
         },
         create: {
           code: item.buyer_sku_code,
           name: item.product_name,
           category: mapCategory(item.category),
           costPrice: cost,
-          priceReseller: cost + mReseller,
-          priceAgen: cost + mAgen,
-          priceMasterDealer: cost + mMD,
+          priceReseller: sell,
           skuH2h: item.buyer_sku_code,
           isActive: true,
         },
       })
       synced++
     }
+      
+    // Nonaktifkan produk yang sudah dihapus oleh user di Web Digiflazz
+    let deactivatedCount = 0
+    if (activeSkuList.length > 0) {
+      const res = await prisma.product.updateMany({
+        where: { code: { notIn: activeSkuList } },
+        data: { isActive: false },
+      })
+      deactivatedCount = res.count
+    }
 
-    return NextResponse.json({ message: `Sync selesai: ${synced} produk, ${skipped} dilewati` })
+    return NextResponse.json({ message: `Sync selesai: ${synced} produk sinkron. ${deactivatedCount > 0 ? deactivatedCount + ' produk dinonaktifkan.' : ''}` })
   } catch (error: any) {
     if (error.message === 'UNAUTHORIZED') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     if (error.message === 'FORBIDDEN') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
@@ -57,7 +91,6 @@ export async function POST(req: NextRequest) {
 
 function mapCategory(cat: string): any {
   const map: Record<string, string> = {
-    // Prabayar
     'Pulsa': 'PULSA',
     'Data': 'DATA',
     'Games': 'GAMES',
@@ -82,7 +115,6 @@ function mapCategory(cat: string): any {
     'Srianka TOPUP': 'SRILANKA_TOPUP',
     'Srilanka TOPUP': 'SRILANKA_TOPUP',
     'Bundling': 'BUNDLING',
-    // Pascabayar
     'PLN Pascabayar': 'PLN_PASCABAYAR',
     'PDAM': 'PDAM',
     'HP Pascabayar': 'HP_PASCABAYAR',
@@ -104,4 +136,3 @@ function mapCategory(cat: string): any {
   }
   return map[cat] ?? 'LAINNYA'
 }
-

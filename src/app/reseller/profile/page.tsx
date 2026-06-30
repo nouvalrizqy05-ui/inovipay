@@ -8,7 +8,7 @@ import { formatDate, formatRupiah } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
 import {
   User, Lock, Shield, Star, ChevronRight, LogOut,
-  Edit3, Check, X, Eye, EyeOff, Store, MapPin
+  Edit3, Check, X, Eye, EyeOff, Store, MapPin, Smartphone
 } from 'lucide-react'
 
 const TIER_INFO = {
@@ -27,6 +27,7 @@ export default function ProfilePage() {
   
   const [form, setForm] = useState({ name: '', storeName: '' })
   const [pinForm, setPinForm] = useState({ currentPin: '', newPin: '', confirmPin: '' })
+  const [requestDevices, setRequestDevices] = useState(2)
   
   const [saving, setSaving] = useState(false)
   const [showPw, setShowPw] = useState(false)
@@ -48,6 +49,18 @@ export default function ProfilePage() {
       setActiveSection('main')
     } catch (err: any) {
       toast.error(err.response?.data?.error ?? 'Gagal memperbarui profil')
+    } finally { setSaving(false) }
+  }
+
+  async function handleRequestDevice() {
+    setSaving(true)
+    try {
+      await api.post('/reseller/device-request', { requestedDevices: requestDevices })
+      setUser({ ...user, deviceRequest: requestDevices })
+      toast.success('Permintaan berhasil dikirim ke Admin')
+      setActiveSection('main')
+    } catch (err: any) {
+      toast.error(err.response?.data?.error ?? 'Gagal mengirim permintaan')
     } finally { setSaving(false) }
   }
 
@@ -113,6 +126,41 @@ export default function ProfilePage() {
           <input type="text" className="input" value={form.storeName} onChange={e => setForm({ ...form, storeName: e.target.value })} />
         </div>
         <button onClick={handleSaveProfile} disabled={saving} className="btn-primary w-full">{saving ? 'Menyimpan...' : 'Simpan Profil'}</button>
+      </div>
+    </div>
+  )
+
+  if (activeSection === 'device') return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <button onClick={() => setActiveSection('main')} className="p-2 hover:bg-gray-100 rounded-xl"><X className="w-5 h-5" /></button>
+        <h1 className="text-xl font-black">Batas Perangkat</h1>
+      </div>
+      <div className="card space-y-4">
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-sm text-blue-800">
+          <p className="font-semibold">📱 Keamanan Akun</p>
+          <p className="mt-0.5 text-xs">Batas perangkat saat ini adalah {user?.maxDevices || 1}. Jika ingin menggunakan lebih banyak HP untuk akun yang sama, Anda bisa memintanya ke Admin.</p>
+        </div>
+        
+        {user?.deviceRequest ? (
+          <div className="bg-yellow-50 text-yellow-800 p-4 rounded-xl text-center border border-yellow-200">
+            <p className="font-bold">Permintaan Sedang Diproses ⏳</p>
+            <p className="text-sm mt-1">Anda sudah meminta untuk {user.deviceRequest} perangkat. Menunggu persetujuan Admin.</p>
+          </div>
+        ) : (
+          <>
+            <div>
+              <label className="label">Jumlah Perangkat yang Diinginkan</label>
+              <input type="number" min={(user?.maxDevices || 1) + 1} className="input" value={requestDevices} onChange={e => setRequestDevices(Number(e.target.value))} />
+            </div>
+            
+            <button onClick={handleRequestDevice} disabled={saving} className="btn-primary w-full bg-blue-600 hover:bg-blue-700">{saving ? 'Mengirim...' : 'Ajukan Permintaan'}</button>
+            <div className="text-center mt-2">
+              <span className="text-xs text-gray-500">Atau hubungi via </span>
+              <a href="https://wa.me/6281200000000" target="_blank" rel="noreferrer" className="text-xs font-bold text-emerald-600 hover:underline">WhatsApp Admin</a>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )
@@ -207,6 +255,15 @@ export default function ProfilePage() {
             <Shield className="w-4 h-4" />
           </div>
           <span className="flex-1 text-sm font-semibold text-left text-gray-800">{user?.hasPIN ? 'Ganti PIN' : 'Atur PIN'}</span>
+          <ChevronRight className="w-4 h-4 text-gray-300" />
+        </button>
+        <button onClick={() => setActiveSection('device')}
+          className="w-full flex items-center gap-3 py-3.5 first:pt-0 last:pb-0 hover:text-blue-600 transition-colors">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-blue-600 bg-blue-50">
+            <Smartphone className="w-4 h-4" />
+          </div>
+          <span className="flex-1 text-sm font-semibold text-left text-gray-800">Manajemen Perangkat ({user?.maxDevices || 1})</span>
+          {user?.deviceRequest && <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-bold">Pending</span>}
           <ChevronRight className="w-4 h-4 text-gray-300" />
         </button>
       </div>

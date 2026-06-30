@@ -10,12 +10,7 @@ function calcPoints(margin: number): number {
   return Math.floor(margin / 1000)
 }
 
-// Ambil harga produk sesuai tier user
-function getTierPrice(product: any, tier: string): number {
-  if (tier === 'MASTER_DEALER') return Number(product.priceMasterDealer)
-  if (tier === 'AGEN') return Number(product.priceAgen)
-  return Number(product.priceReseller)
-}
+// Harga sesuai dengan tabel produk (priceReseller)
 
 export async function POST(req: NextRequest) {
   try {
@@ -39,8 +34,8 @@ export async function POST(req: NextRequest) {
     const wallet = user.wallet
     if (!wallet) return NextResponse.json({ error: 'Wallet tidak ditemukan' }, { status: 404 })
 
-    // Harga sesuai tier
-    const sellPrice = getTierPrice(product, user.tier)
+    // Harga sesuai dengan tabel produk
+    const sellPrice = Number(product.priceReseller)
     const available = Number(wallet.balance) - Number(wallet.balanceHold)
     if (available < sellPrice) return NextResponse.json({ error: 'Saldo tidak mencukupi' }, { status: 402 })
 

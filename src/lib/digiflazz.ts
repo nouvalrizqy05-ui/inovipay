@@ -23,9 +23,9 @@ export async function cekSaldo(): Promise<number> {
   return data.data.deposit
 }
 
-export async function getPriceList(category?: string) {
+export async function getPriceList(category?: string, cmd: 'prepaid' | 'pasca' = 'prepaid') {
   const body: Record<string, string> = {
-    cmd: 'prepaid',
+    cmd,
     username,
     sign: sign('pricelist'),
   }

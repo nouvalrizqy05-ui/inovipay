@@ -97,7 +97,7 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-gradient-to-br from-[#F97316] via-[#F97316] to-[#C2410C] flex items-end lg:items-center justify-center p-0 lg:p-4 relative">
       
       {/* Tombol Kembali ke Landing Page */}
-      <Link href="/" className="absolute top-6 left-6 lg:top-8 lg:left-8 z-50 flex items-center justify-center w-10 h-10 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full text-white transition-all active:scale-95 shadow-lg shadow-[#F97316]/20">
+      <Link href="/" className="absolute top-6 left-6 lg:top-8 lg:left-8 z-40 flex items-center justify-center w-10 h-10 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full text-white transition-all active:scale-95 shadow-lg shadow-[#F97316]/20">
         <ArrowLeft className="w-5 h-5" />
       </Link>
 

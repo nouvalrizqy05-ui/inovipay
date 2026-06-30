@@ -21,8 +21,9 @@ function VerifyOtpContent() {
     }
     
     setLoading(true)
+    let deviceId = localStorage.getItem('deviceId')
     try {
-      const res = await api.post('/auth/verify-otp', { userId, otp })
+      const res = await api.post('/auth/verify-otp', { userId, otp, deviceId })
       toast.success(res.data.message)
       localStorage.setItem('token', res.data.token)
       localStorage.setItem('user', JSON.stringify(res.data.user))

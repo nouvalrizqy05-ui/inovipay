@@ -4,6 +4,7 @@ import Loading from '@/components/ui/loading'
 import api from '@/lib/api-client'
 import { formatRupiah } from '@/lib/utils'
 import Link from 'next/link'
+import { toast } from 'sonner'
 import FiturPenjualan from '@/components/fitur-penjualan'
 import { 
   CreditCard, Star, Plus, 
@@ -54,12 +55,26 @@ export default function ResellerDashboard() {
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   useEffect(() => {
     const u = localStorage.getItem('user')
     if (u) setUser(JSON.parse(u))
     api.get('/reseller/dashboard').then(r => setData(r.data)).finally(() => setLoading(false))
   }, [])
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true)
+    try {
+      const r = await api.get('/reseller/dashboard')
+      setData(r.data)
+      toast.success('Saldo diperbarui', { style: { background: '#22c55e', color: 'white', border: 'none' } })
+    } catch (err) {
+      toast.error('Gagal memperbarui saldo')
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
 
   if (loading) return <Loading text="Memuat dashboard..." />
 
@@ -90,8 +105,8 @@ export default function ResellerDashboard() {
                 </div>
                 <div className="flex items-center gap-2">
                   <p className="text-[26px] font-black text-gray-900 tracking-tight leading-none">{formatRupiah(wallet.available ?? 0)}</p>
-                  <button className="p-1.5 bg-gray-50 rounded-full text-gray-400 hover:text-orange-500 hover:bg-orange-50 transition-colors">
-                    <RefreshCw className="w-3.5 h-3.5" />
+                  <button onClick={handleRefresh} disabled={isRefreshing} className={`p-1.5 bg-gray-50 rounded-full text-gray-400 hover:text-orange-500 hover:bg-orange-50 transition-colors ${isRefreshing ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                    <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-orange-500' : ''}`} />
                   </button>
                 </div>
               </div>

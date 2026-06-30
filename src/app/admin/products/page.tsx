@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { RefreshCw, Plus, ToggleLeft, ToggleRight } from 'lucide-react'
+import { RefreshCw, Plus, ToggleLeft, ToggleRight, Save, Edit2 } from 'lucide-react'
 import Loading from '@/components/ui/loading'
 import Empty from '@/components/ui/empty'
 import api from '@/lib/api-client'
@@ -29,10 +29,19 @@ export default function AdminProductsPage() {
   const [categoryFilter, setCategoryFilter] = useState('ALL')
   const [form, setForm] = useState({
     code:'', name:'', category:'PULSA', costPrice:'',
-    priceReseller:'', priceAgen:'', priceMasterDealer:'', skuH2h:''
+    priceReseller:'', skuH2h:''
   })
   const [saving, setSaving] = useState(false)
-  const [syncMargin, setSyncMargin] = useState({ reseller:'2000', agen:'1500', md:'1000' })
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editPrice, setEditPrice] = useState<string>('')
+
+  // Sync Modal State
+  const [showSyncModal, setShowSyncModal] = useState(false)
+  const [syncOptions, setSyncOptions] = useState({
+    marginReseller: 2000
+  })
+  const [deletingInactive, setDeletingInactive] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
 
   useEffect(() => { fetchProducts() }, [])
 
@@ -45,13 +54,12 @@ export default function AdminProductsPage() {
 
   async function handleSync() {
     setSyncing(true)
+    setShowSyncModal(false)
     try {
       const res = await api.post('/products/sync', {
-        marginReseller: Number(syncMargin.reseller),
-        marginAgen: Number(syncMargin.agen),
-        marginMD: Number(syncMargin.md),
+        marginReseller: Number(syncOptions.marginReseller),
       })
-      toast.success(res.data.message)
+      toast.success(res.data.message || 'Sync berhasil')
       fetchProducts()
     } catch (err: any) {
       toast.error(err.response?.data?.error ?? 'Sync gagal')
@@ -66,12 +74,10 @@ export default function AdminProductsPage() {
         ...form,
         costPrice: Number(form.costPrice),
         priceReseller: Number(form.priceReseller),
-        priceAgen: Number(form.priceAgen || form.priceReseller),
-        priceMasterDealer: Number(form.priceMasterDealer || form.priceReseller),
       })
       toast.success('Produk ditambahkan')
       setShowForm(false)
-      setForm({ code:'', name:'', category:'PULSA', costPrice:'', priceReseller:'', priceAgen:'', priceMasterDealer:'', skuH2h:'' })
+      setForm({ code:'', name:'', category:'PULSA', costPrice:'', priceReseller:'', skuH2h:'' })
       fetchProducts()
     } catch (err: any) {
       toast.error(err.response?.data?.error ?? 'Gagal')
@@ -80,9 +86,41 @@ export default function AdminProductsPage() {
 
   async function toggleProduct(id: string, isActive: boolean) {
     try {
-      // Update via PATCH - we'll need to add this endpoint
-      toast.info('Fitur toggle akan tersedia di update berikutnya')
-    } catch { toast.error('Gagal') }
+      await api.patch('/products', { id, isActive })
+      toast.success(isActive ? 'Produk diaktifkan' : 'Produk dinonaktifkan')
+      fetchProducts()
+    } catch {
+      toast.error('Gagal mengubah status produk')
+    }
+  }
+
+  async function handleSavePrice(id: string) {
+    try {
+      await api.patch('/products/price', { id, priceReseller: Number(editPrice) })
+      toast.success('Harga diperbarui')
+      setEditingId(null)
+      fetchProducts()
+    } catch {
+      toast.error('Gagal simpan harga')
+    }
+  }
+
+  function handleDeleteInactiveClick() {
+    setShowDeleteModal(true)
+  }
+
+  async function executeDeleteInactive() {
+    setDeletingInactive(true)
+    try {
+      const res = await api.delete('/products?action=deleteInactive')
+      toast.success(res.data.message)
+      fetchProducts()
+      setShowDeleteModal(false)
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Gagal menghapus produk')
+    } finally {
+      setDeletingInactive(false)
+    }
   }
 
   const filtered = categoryFilter === 'ALL' ? products : products.filter(p => p.category === categoryFilter)
@@ -99,27 +137,27 @@ export default function AdminProductsPage() {
       </div>
 
       {/* Sync panel */}
-      <div className="card">
-        <h2 className="font-bold text-gray-900 mb-3">Sync dari Digiflazz</h2>
-        <div className="grid grid-cols-3 gap-3 mb-3">
-          {[
-            { key:'reseller', label:'Margin Reseller' },
-            { key:'agen', label:'Margin Agen' },
-            { key:'md', label:'Margin Master Dealer' },
-          ].map(f => (
-            <div key={f.key}>
-              <label className="label text-xs">{f.label} (Rp)</label>
-              <input type="number" className="input" placeholder="2000"
-                value={(syncMargin as any)[f.key]}
-                onChange={e => setSyncMargin({...syncMargin, [f.key]: e.target.value})} />
-            </div>
-          ))}
+      <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div>
+          <h3 className="font-bold text-gray-900">Sinkronisasi Digiflazz</h3>
+          <p className="text-sm text-gray-500">Tarik atau perbarui harga produk otomatis dari pusat</p>
         </div>
-        <button onClick={handleSync} disabled={syncing} className="btn-secondary flex items-center gap-2 text-sm">
-          <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
-          {syncing ? 'Sync...' : 'Sync Semua Produk'}
-        </button>
-        <p className="text-xs text-gray-400 mt-2">Margin diaplikasikan otomatis ke semua tier. Produk yang sudah ada akan diupdate harganya.</p>
+        <div className="flex gap-2">
+          <button 
+            onClick={handleDeleteInactiveClick} 
+            className="px-4 py-2 bg-red-50 text-red-600 rounded-xl font-bold hover:bg-red-100 transition-colors text-sm"
+          >
+            Hapus Produk Tercoret
+          </button>
+          <button 
+            onClick={() => setShowSyncModal(true)} 
+            disabled={syncing}
+            className="btn-primary flex items-center gap-2 px-6"
+          >
+            <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+            {syncing ? 'Menyinkronkan...' : 'Mulai Sync'}
+          </button>
+        </div>
       </div>
 
       {/* Form tambah manual */}
@@ -132,15 +170,13 @@ export default function AdminProductsPage() {
               { key:'name', label:'Nama Produk', placeholder:'XL 10.000' },
               { key:'skuH2h', label:'SKU Digiflazz', placeholder:'xl10' },
               { key:'costPrice', label:'Harga Beli (Rp)', placeholder:'9300', type:'number' },
-              { key:'priceReseller', label:'Harga Reseller (Rp)', placeholder:'11000', type:'number' },
-              { key:'priceAgen', label:'Harga Agen (Rp)', placeholder:'10500', type:'number' },
-              { key:'priceMasterDealer', label:'Harga Master Dealer (Rp)', placeholder:'10200', type:'number' },
+              { key:'priceReseller', label:'Harga Jual (Rp)', placeholder:'11000', type:'number' },
             ].map(f => (
               <div key={f.key}>
                 <label className="label">{f.label}</label>
                 <input type={f.type ?? 'text'} className="input" placeholder={f.placeholder}
                   value={(form as any)[f.key]}
-                  onChange={e => setForm({...form, [f.key]: e.target.value})} required={f.key !== 'priceAgen' && f.key !== 'priceMasterDealer'} />
+                  onChange={e => setForm({...form, [f.key]: e.target.value})} required />
               </div>
             ))}
             <div>
@@ -177,26 +213,61 @@ export default function AdminProductsPage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  {['Produk','SKU','Harga Beli','Reseller','Agen','Master Dealer','Margin'].map(h => (
-                    <th key={h} className="text-left px-4 py-3 font-semibold text-gray-600 whitespace-nowrap">{h}</th>
-                  ))}
+                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Produk</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-600">SKU / Kode</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Harga Beli</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Harga Jual</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Margin</th>
+                  <th className="text-center px-4 py-3 font-semibold text-gray-600 w-10">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filtered.map(p => {
                   const margin = Number(p.priceReseller) - Number(p.costPrice)
+                  const isEditing = editingId === p.id
                   return (
-                    <tr key={p.id} className="hover:bg-gray-50">
+                    <tr key={p.id} className={`hover:bg-gray-50 ${!p.isActive ? 'bg-gray-50/50' : ''}`}>
                       <td className="px-4 py-3">
-                        <p className="font-semibold text-gray-900 max-w-48 truncate">{p.name}</p>
-                        <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">{p.category}</span>
+                        <p className={`font-semibold max-w-48 truncate ${!p.isActive ? 'text-gray-400 line-through' : 'text-gray-900'}`}>{p.name}</p>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded mt-0.5 inline-block ${!p.isActive ? 'bg-gray-200 text-gray-400' : 'bg-gray-100 text-gray-500'}`}>{p.category}</span>
                       </td>
-                      <td className="px-4 py-3 font-mono text-xs text-gray-500">{p.skuH2h}</td>
-                      <td className="px-4 py-3 text-gray-600">{formatRupiah(Number(p.costPrice))}</td>
-                      <td className="px-4 py-3 font-semibold">{formatRupiah(Number(p.priceReseller))}</td>
-                      <td className="px-4 py-3 text-blue-600">{formatRupiah(Number(p.priceAgen))}</td>
-                      <td className="px-4 py-3 text-purple-600">{formatRupiah(Number(p.priceMasterDealer))}</td>
-                      <td className="px-4 py-3 text-emerald-600 font-bold">{formatRupiah(margin)}</td>
+                      <td className={`px-4 py-3 font-mono text-xs ${!p.isActive ? 'text-gray-400' : 'text-gray-500'}`}>
+                        {p.code}<br/>
+                        <span className={p.isActive ? 'text-gray-400' : 'text-gray-300'}>H2H: {p.skuH2h}</span>
+                      </td>
+                      <td className={`px-4 py-3 font-medium ${!p.isActive ? 'text-gray-400' : 'text-red-600'}`}>{formatRupiah(Number(p.costPrice))}</td>
+                      <td className="px-4 py-3">
+                        {isEditing ? (
+                          <input 
+                            type="number"
+                            value={editPrice}
+                            onChange={e => setEditPrice(e.target.value)}
+                            className="input text-sm py-1 px-2 w-28"
+                            autoFocus
+                          />
+                        ) : (
+                          <span className={`font-semibold ${!p.isActive ? 'text-gray-400' : 'text-gray-900'}`}>{formatRupiah(Number(p.priceReseller))}</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`font-bold ${!p.isActive ? 'text-gray-400' : margin > 0 ? 'text-emerald-600' : margin < 0 ? 'text-red-600' : 'text-gray-500'}`}>
+                          {margin > 0 ? '+' : ''}{formatRupiah(margin)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-center flex items-center justify-center gap-1">
+                        <button onClick={() => toggleProduct(p.id, !p.isActive)} title={p.isActive ? 'Nonaktifkan' : 'Aktifkan'} className={`p-1.5 rounded-lg ${p.isActive ? 'text-emerald-500 hover:bg-emerald-50' : 'text-gray-400 hover:bg-gray-100'}`}>
+                          {p.isActive ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
+                        </button>
+                        {isEditing ? (
+                          <button onClick={() => handleSavePrice(p.id)} className="p-1.5 text-[#00B4A0] hover:bg-[#00B4A0]/10 rounded-lg">
+                            <Save className="w-4 h-4" />
+                          </button>
+                        ) : (
+                          <button onClick={() => { setEditingId(p.id); setEditPrice(p.priceReseller.toString()) }} className="p-1.5 text-gray-400 hover:text-[#00B4A0] hover:bg-gray-100 rounded-lg">
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   )
                 })}
@@ -205,6 +276,73 @@ export default function AdminProductsPage() {
           </div>
           <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 text-xs text-gray-500">
             {filtered.length} produk ditampilkan
+          </div>
+        </div>
+      )}
+
+      {/* SYNC MODAL */}
+      {showSyncModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl">
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Sync Produk</h2>
+            <p className="text-sm text-gray-500 mb-6">Tarik produk dari server Digiflazz untuk memperbarui stok dan harga.</p>
+            
+            <div className="space-y-4 my-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Margin (Keuntungan) per Produk <span className="text-gray-400 font-normal">(Opsional)</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">Rp</span>
+                  <input
+                    type="number"
+                    value={syncOptions.marginReseller}
+                    onChange={e => setSyncOptions({...syncOptions, marginReseller: Number(e.target.value)})}
+                    className="input pl-9"
+                    placeholder="Contoh: 2000"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1.5">Harga Jual otomatis = Harga Beli Digiflazz + Margin ini.</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-8">
+              <button onClick={() => setShowSyncModal(false)} className="flex-1 py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors">
+                Batal
+              </button>
+              <button onClick={handleSync} className="flex-1 py-3 bg-[#00B4A0] text-white font-bold rounded-xl hover:bg-[#009B8A] transition-colors flex items-center justify-center gap-2">
+                <RefreshCw className="w-4 h-4" /> Mulai Sync
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-3xl">🗑️</span>
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Hapus Produk Tercoret?</h2>
+            <p className="text-sm text-gray-500 mb-6">Semua produk yang sudah tidak aktif (tercoret) akan dihapus secara permanen dari database. Tindakan ini tidak dapat dibatalkan.</p>
+            
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors"
+                disabled={deletingInactive}
+              >
+                Batal
+              </button>
+              <button 
+                onClick={executeDeleteInactive}
+                className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors"
+                disabled={deletingInactive}
+              >
+                {deletingInactive ? 'Menghapus...' : 'Ya, Hapus'}
+              </button>
+            </div>
           </div>
         </div>
       )}

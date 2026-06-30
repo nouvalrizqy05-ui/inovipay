@@ -127,6 +127,10 @@ model User {
   favoriteNumbers FavoriteNumber[]
   catatan         Catatan[]
   kasirSessions   KasirSession[]
+  devices         UserDevice[]
+
+  maxDevices      Int        @default(1) @map("max_devices")
+  deviceRequest   Int?       @map("device_request")
 
   @@map("users")
 }
@@ -142,6 +146,19 @@ model Wallet {
   ledger WalletLedger[]
 
   @@map("wallets")
+}
+
+model UserDevice {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  deviceId    String   @unique @map("device_id")
+  deviceInfo  String?  @map("device_info")
+  lastLogin   DateTime @default(now()) @map("last_login")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_devices")
 }
 
 model WalletLedger {
@@ -163,10 +180,7 @@ model Product {
   name      String
   category  ProductCategory
   costPrice Decimal         @map("cost_price") @db.Decimal(12, 2)
-  // Harga per tier
   priceReseller    Decimal  @map("price_reseller") @db.Decimal(12, 2)
-  priceAgen        Decimal  @map("price_agen") @db.Decimal(12, 2)
-  priceMasterDealer Decimal @map("price_master_dealer") @db.Decimal(12, 2)
   skuH2h    String          @map("sku_h2h")
   isActive  Boolean         @default(true) @map("is_active")
   createdAt DateTime        @default(now()) @map("created_at")

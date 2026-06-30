@@ -5,13 +5,20 @@ import crypto from 'crypto'
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId, otp } = await req.json()
+    const { userId, otp, deviceId } = await req.json()
 
     if (!userId || !otp) {
       return NextResponse.json({ error: 'Kode OTP wajib diisi' }, { status: 400 })
     }
+    
+    if (!deviceId) {
+      return NextResponse.json({ error: 'Device ID tidak ditemukan, silakan refresh browser' }, { status: 400 })
+    }
 
-    const user = await prisma.user.findUnique({ where: { id: userId } })
+    const user = await prisma.user.findUnique({ 
+      where: { id: userId },
+      include: { devices: true }
+    })
 
     if (!user) {
       return NextResponse.json({ error: 'Pengguna tidak ditemukan' }, { status: 404 })
@@ -23,6 +30,32 @@ export async function POST(req: NextRequest) {
 
     if (user.otpExp && new Date() > user.otpExp) {
       return NextResponse.json({ error: 'Kode OTP sudah kedaluwarsa, silakan login ulang' }, { status: 400 })
+    }
+    
+    // Check device limit for resellers
+    if (user.role !== 'ADMIN') {
+      const existingDevice = user.devices.find(d => d.deviceId === deviceId)
+      if (!existingDevice) {
+        if (user.devices.length >= user.maxDevices) {
+          return NextResponse.json({ 
+            error: `Login ditolak: Batas maksimal ${user.maxDevices} perangkat tercapai. Silakan hapus perangkat lama di dashboard atau hubungi Admin.`
+          }, { status: 403 })
+        }
+        // Register new device
+        await prisma.userDevice.create({
+          data: {
+            userId: user.id,
+            deviceId: deviceId,
+            deviceInfo: req.headers.get('user-agent') || 'Unknown Browser'
+          }
+        })
+      } else {
+        // Update last login
+        await prisma.userDevice.update({
+          where: { id: existingDevice.id },
+          data: { lastLogin: new Date() }
+        })
+      }
     }
 
     const sessionId = crypto.randomUUID()

@@ -14,6 +14,7 @@ export default function ResellersPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [modal, setModal] = useState<{ open: boolean; reseller: any; action: string }>({ open: false, reseller: null, action: '' })
+  const [newMaxDevices, setNewMaxDevices] = useState(1)
 
   useEffect(() => { fetchResellers() }, [search, statusFilter])
 
@@ -33,6 +34,9 @@ export default function ResellersPage() {
       if (modal.action === 'reset_session') {
         await api.patch(`/admin/resellers/${modal.reseller.id}`, { action: 'RESET_SESSION' })
         toast.success('Sesi perangkat berhasil direset')
+      } else if (modal.action === 'set_max_devices') {
+        await api.patch(`/admin/resellers/${modal.reseller.id}`, { action: 'SET_MAX_DEVICES', maxDevices: newMaxDevices })
+        toast.success('Batas perangkat berhasil diubah')
       } else if (modal.action === 'delete') {
         await api.delete(`/admin/resellers/${modal.reseller.id}`)
         toast.success('Akun reseller berhasil dihapus permanen')
@@ -71,7 +75,7 @@ export default function ResellersPage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  {['Reseller', 'Saldo', 'Transaksi', 'Status', 'Bergabung', 'Aksi'].map(h => (
+                  {['Reseller', 'Saldo', 'Transaksi', 'Perangkat', 'Status', 'Bergabung', 'Aksi'].map(h => (
                     <th key={h} className="text-left px-4 py-3 font-medium text-gray-600">{h}</th>
                   ))}
                 </tr>
@@ -89,6 +93,15 @@ export default function ResellersPage() {
                       <p className="text-xs text-gray-400">Ditahan: {formatRupiah(Number(r.wallet?.balanceHold ?? 0))}</p>
                     </td>
                     <td className="px-4 py-3 text-center">{r._count?.transactions ?? 0}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-gray-900">Maks {r.maxDevices || 1}</span>
+                        {r.deviceRequest && (
+                          <span className="bg-yellow-100 text-yellow-700 text-[10px] px-1.5 py-0.5 rounded font-bold" title="Request Tambah Perangkat">Req: {r.deviceRequest}</span>
+                        )}
+                        <button onClick={() => { setNewMaxDevices(r.deviceRequest || r.maxDevices || 1); setModal({ open: true, reseller: r, action: 'set_max_devices' }) }} className="text-blue-500 hover:text-blue-700 text-xs">Edit</button>
+                      </div>
+                    </td>
                     <td className="px-4 py-3"><span className={getStatusBadge(r.status)}>{getStatusLabel(r.status)}</span></td>
                     <td className="px-4 py-3 text-xs text-gray-500">{formatDate(r.createdAt)}</td>
                     <td className="px-4 py-3">
@@ -115,15 +128,33 @@ export default function ResellersPage() {
         </div>
       )}
 
-      <ConfirmModal
-        isOpen={modal.open}
-        title={modal.action === 'activate' ? 'Aktifkan Reseller?' : modal.action === 'reset_session' ? 'Reset Perangkat?' : modal.action === 'delete' ? 'Hapus Akun Permanen?' : 'Suspend Reseller?'}
-        message={modal.action === 'reset_session' ? `Reset sesi login untuk akun ${modal.reseller?.name}? Ini akan memaksa logout mereka.` : modal.action === 'delete' ? `Hapus akun ${modal.reseller?.name} secara permanen beserta saldo dan seluruh riwayat transaksinya? Tindakan ini tidak dapat dibatalkan.` : `${modal.action === 'activate' ? 'Aktifkan' : 'Suspend'} akun ${modal.reseller?.name}?`}
-        confirmLabel={modal.action === 'activate' ? 'Aktifkan' : modal.action === 'reset_session' ? 'Reset' : modal.action === 'delete' ? 'Hapus' : 'Suspend'}
-        danger={modal.action === 'suspend' || modal.action === 'delete'}
-        onConfirm={handleAction}
-        onCancel={() => setModal({ open: false, reseller: null, action: '' })}
-      />
+      {modal.open && modal.action === 'set_max_devices' ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
+            <h2 className="text-xl font-bold mb-2">Batas Perangkat</h2>
+            <p className="text-sm text-gray-500 mb-4">Ubah batas maksimal HP/Perangkat yang bisa digunakan untuk login oleh akun {modal.reseller?.name}.</p>
+            <input 
+              type="number" min="1"
+              value={newMaxDevices} onChange={e => setNewMaxDevices(Number(e.target.value))}
+              className="input mb-6"
+            />
+            <div className="flex gap-2">
+              <button onClick={() => setModal({ open: false, reseller: null, action: '' })} className="flex-1 py-2 bg-gray-100 font-bold rounded-lg hover:bg-gray-200">Batal</button>
+              <button onClick={handleAction} className="flex-1 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700">Simpan</button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <ConfirmModal
+          isOpen={modal.open}
+          title={modal.action === 'activate' ? 'Aktifkan Reseller?' : modal.action === 'reset_session' ? 'Reset Perangkat?' : modal.action === 'delete' ? 'Hapus Akun Permanen?' : 'Suspend Reseller?'}
+          message={modal.action === 'reset_session' ? `Reset sesi login untuk akun ${modal.reseller?.name}? Ini akan memaksa logout mereka.` : modal.action === 'delete' ? `Hapus akun ${modal.reseller?.name} secara permanen beserta saldo dan seluruh riwayat transaksinya? Tindakan ini tidak dapat dibatalkan.` : `${modal.action === 'activate' ? 'Aktifkan' : 'Suspend'} akun ${modal.reseller?.name}?`}
+          confirmLabel={modal.action === 'activate' ? 'Aktifkan' : modal.action === 'reset_session' ? 'Reset' : modal.action === 'delete' ? 'Hapus' : 'Suspend'}
+          danger={modal.action === 'suspend' || modal.action === 'delete'}
+          onConfirm={handleAction}
+          onCancel={() => setModal({ open: false, reseller: null, action: '' })}
+        />
+      )}
     </div>
   )
 }

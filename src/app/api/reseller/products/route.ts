@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const category = searchParams.get('category') ?? undefined
 
-    // Ambil tier user untuk menentukan harga
+    // Ambil tier user untuk menentukan harga (walaupun sekarang harga sama)
     const user = await prisma.user.findUnique({ where: { id: userId }, select: { tier: true } })
     const tier = user?.tier ?? 'RESELLER'
 
@@ -16,17 +16,26 @@ export async function GET(req: NextRequest) {
       where: { isActive: true, ...(category && { category: category as any }) },
       select: {
         id: true, code: true, name: true, category: true,
-        priceReseller: true, priceAgen: true, priceMasterDealer: true,
+        priceReseller: true,
       },
       orderBy: [{ category: 'asc' }, { priceReseller: 'asc' }],
     })
 
-    // Map harga sesuai tier
-    const mapped = products.map(p => ({
+    // AUTO-CHEAPEST: Group by name and keep only the cheapest one
+    const cheapestMap = new Map<string, typeof products[0]>()
+    for (const p of products) {
+      const existing = cheapestMap.get(p.name)
+      if (!existing || Number(p.priceReseller) < Number(existing.priceReseller)) {
+        cheapestMap.set(p.name, p)
+      }
+    }
+
+    const uniqueProducts = Array.from(cheapestMap.values())
+
+    // Map harga
+    const mapped = uniqueProducts.map(p => ({
       id: p.id, code: p.code, name: p.name, category: p.category,
-      sellPrice: tier === 'MASTER_DEALER' ? p.priceMasterDealer
-               : tier === 'AGEN' ? p.priceAgen
-               : p.priceReseller,
+      sellPrice: p.priceReseller,
       tier,
     }))
 

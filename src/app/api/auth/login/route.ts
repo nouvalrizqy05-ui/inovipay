@@ -55,12 +55,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if (user.currentSessionId && user.role !== 'ADMIN') {
-      return NextResponse.json(
-        { error: 'Akun ini sedang aktif di perangkat lain. <a href="https://wa.me/6281200000000" target="_blank" class="underline text-orange-200">Hubungi admin</a> untuk me-reset sesi jika ini bukan Anda.' },
-        { status: 403 }
-      )
-    }
+    // Remove currentSessionId check since we use UserDevice limit now
 
     if (user.role === 'ADMIN') {
       const sessionId = crypto.randomUUID()

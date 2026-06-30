@@ -6,14 +6,23 @@ import { sendNotification, sendWhatsApp } from '@/lib/notification'
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     await requireAdmin(req)
-    const { status, action } = await req.json() // status: 'ACTIVE' | 'SUSPENDED', action?: 'RESET_SESSION'
+    const { status, action, maxDevices } = await req.json() 
 
     const reseller = await prisma.user.findUnique({ where: { id: params.id } })
     if (!reseller) return NextResponse.json({ error: 'Reseller tidak ditemukan' }, { status: 404 })
 
     if (action === 'RESET_SESSION') {
       await prisma.user.update({ where: { id: params.id }, data: { currentSessionId: null } })
+      await prisma.userDevice.deleteMany({ where: { userId: params.id } })
       return NextResponse.json({ message: 'Sesi perangkat berhasil direset' })
+    }
+    
+    if (action === 'SET_MAX_DEVICES') {
+      await prisma.user.update({ 
+        where: { id: params.id }, 
+        data: { maxDevices: Number(maxDevices) || 1, deviceRequest: null } 
+      })
+      return NextResponse.json({ message: 'Batas perangkat berhasil diubah' })
     }
 
     await prisma.user.update({ where: { id: params.id }, data: { status } })

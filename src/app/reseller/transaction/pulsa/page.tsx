@@ -86,9 +86,12 @@ export default function PulsaPage() {
       .sort((a, b) => a.sellPrice - b.sellPrice)
   }, [products, opName])
 
-  // Cari produk terlaris buatan (nominal 25rb dan 50rb)
+  // Cari produk terlaris buatan (nominal realistis 5rb, 10rb, 20rb)
   const isTerlaris = (name: string) => {
-    return name.includes('25') || name.includes('50')
+    const match = name.match(/\d+/)
+    if (!match) return false
+    const nominal = parseInt(match[0], 10)
+    return [5, 10, 20, 5000, 10000, 20000].includes(nominal)
   }
 
   const handleBuyClick = () => {
