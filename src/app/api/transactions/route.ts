@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
 
     // Kirim ke Digiflazz
     try {
-      const result = await createTransaction({ refId, skuCode: product.skuH2h, customerNo: targetNumber })
+      const result = await createTransaction({ skuCode: product.skuH2h, customerNo: targetNumber, refId })
 
       if (result.status === 'Sukses') {
         await prisma.$transaction(async (tx) => {
