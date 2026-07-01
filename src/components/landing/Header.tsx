@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { Rocket, Menu, X } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import InstallPwaButton from '../InstallPwaButton'
 
 const navLinks = [
