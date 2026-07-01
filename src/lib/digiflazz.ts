@@ -1,4 +1,6 @@
 import crypto from 'crypto'
+import axios from 'axios'
+import url from 'url'
 
 const BASE_URL = 'https://api.digiflazz.com/v1'
 const username = process.env.DIGIFLAZZ_USERNAME!
@@ -12,14 +14,37 @@ function sign(suffix: string): string {
   return crypto.createHash('md5').update(username + apiKey + suffix).digest('hex')
 }
 
+// Wrapper axios untuk otomatis pakai proxy jika ada FIXIE_URL
+async function digiflazzRequest(endpoint: string, data: any) {
+  const config: any = {}
+  
+  if (process.env.FIXIE_URL) {
+    const fixieUrl = url.parse(process.env.FIXIE_URL)
+    if (fixieUrl.auth && fixieUrl.hostname && fixieUrl.port) {
+      const fixieAuth = fixieUrl.auth.split(':')
+      config.proxy = {
+        protocol: fixieUrl.protocol ? fixieUrl.protocol.replace(':', '') : 'http',
+        host: fixieUrl.hostname,
+        port: parseInt(fixieUrl.port),
+        auth: { username: fixieAuth[0], password: fixieAuth[1] }
+      }
+    }
+  }
+
+  try {
+    const res = await axios.post(`${BASE_URL}${endpoint}`, data, config)
+    return res.data
+  } catch (error: any) {
+    if (error.response) {
+      console.error('Digiflazz raw response:', error.response.data)
+      throw new Error(error.response.data?.data?.message || error.response.data?.message || 'Gagal kirim transaksi')
+    }
+    throw error
+  }
+}
+
 export async function cekSaldo(): Promise<number> {
-  const res = await fetch(`${BASE_URL}/cek-saldo`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ cmd: 'deposit', username, sign: sign('depo') }),
-  })
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.message || 'Gagal cek saldo Digiflazz')
+  const data = await digiflazzRequest('/cek-saldo', { cmd: 'deposit', username, sign: sign('depo') })
   return data.data.deposit
 }
 
@@ -30,13 +55,7 @@ export async function getPriceList(category?: string, cmd: 'prepaid' | 'pasca' =
     sign: sign('pricelist'),
   }
   if (category) body.category = category
-  const res = await fetch(`${BASE_URL}/price-list`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.message || 'Gagal ambil price list')
+  const data = await digiflazzRequest('/price-list', body)
   return data.data
 }
 
@@ -57,40 +76,38 @@ export interface DigiflazzResponse {
 }
 
 export async function createTransaction(payload: TransactionPayload): Promise<DigiflazzResponse> {
-  const res = await fetch(`${BASE_URL}/transaction`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      username,
-      buyer_sku_code: payload.skuCode,
-      customer_no: payload.customerNo,
-      ref_id: payload.refId,
-      sign: sign(payload.refId),
-      testing: mode !== 'production',
-    }),
+  const data = await digiflazzRequest('/transaction', {
+    username,
+    buyer_sku_code: payload.skuCode,
+    customer_no: payload.customerNo,
+    ref_id: payload.refId,
+    sign: sign(payload.refId),
+    testing: mode !== 'production',
   })
-  const data = await res.json()
-  if (!res.ok) {
-    console.error('Digiflazz raw response:', data)
-    throw new Error(data?.data?.message || data?.message || 'Gagal kirim transaksi')
-  }
+  return data.data
+}
+
+export async function createTransactionPasca(payload: TransactionPayload): Promise<DigiflazzResponse> {
+  const data = await digiflazzRequest('/transaction', {
+    commands: 'pay-pasca',
+    username,
+    buyer_sku_code: payload.skuCode,
+    customer_no: payload.customerNo,
+    ref_id: payload.refId,
+    sign: sign(payload.refId),
+    testing: mode !== 'production',
+  })
   return data.data
 }
 
 export async function checkTransaction(refId: string): Promise<DigiflazzResponse> {
-  const res = await fetch(`${BASE_URL}/transaction`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      username,
-      buyer_sku_code: '',
-      customer_no: '',
-      ref_id: refId,
-      sign: sign(refId),
-      cmd: 'inquiry-transaction',
-    }),
+  const data = await digiflazzRequest('/transaction', {
+    username,
+    buyer_sku_code: '',
+    customer_no: '',
+    ref_id: refId,
+    sign: sign(refId),
+    cmd: 'inquiry-transaction',
   })
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.message || 'Gagal cek transaksi')
   return data.data
 }
