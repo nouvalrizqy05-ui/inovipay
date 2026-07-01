@@ -99,19 +99,19 @@ export default function PulsaPage() {
     setShowConfirm(true)
   }
 
-  const handleConfirm = async () => {
+  const handleConfirm = async (pin: string) => {
     setIsProcessing(true)
     try {
       const res = await api.post('/transactions', {
         productCode: selectedProduct.code,
         targetNumber: cleanPhone,
-        pin: '123456' // TODO: implement PIN input modal later or skip if disabled
+        pin
       })
       
       setShowConfirm(false)
       // Show receipt
       setReceiptTx({
-        id: res.data.transaction?.id || `TRX-${Date.now()}`,
+        id: res.data.transactionId || `TRX-${Date.now()}`,
         date: new Date(),
         amount: selectedProduct.sellPrice,
       })

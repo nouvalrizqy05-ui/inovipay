@@ -61,13 +61,13 @@ export default function BpjsPage() {
   const totalBill = billData ? billData.baseAmount * monthsCount : 0
   const total = billData ? totalBill + billData.adminFee : 0
 
-  const handleConfirm = async () => {
+  const handleConfirm = async (pin: string) => {
     setIsProcessing(true)
     try {
       const res = await api.post('/transactions', {
         productCode: 'BPJS_KES',
         targetNumber: customerId,
-        pin: '123456'
+        pin
       })
       setShowConfirm(false)
       setReceiptTx({

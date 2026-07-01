@@ -57,13 +57,13 @@ export default function EsimPage() {
     setShowConfirm(true)
   }
 
-  const handleConfirm = async () => {
+  const handleConfirm = async (pin: string) => {
     setIsProcessing(true)
     try {
       const res = await api.post('/transactions', {
         productCode: selectedProduct.code,
         targetNumber: email,
-        pin: '123456'
+        pin
       })
       
       setShowConfirm(false)

@@ -57,13 +57,13 @@ export default function BpjsKetenagakerjaanPage() {
 
   const total = billData ? billData.billAmount + billData.penalty + billData.adminFee : 0
 
-  const handleConfirm = async () => {
+  const handleConfirm = async (pin: string) => {
     setIsProcessing(true)
     try {
       const res = await api.post('/transactions', {
         productCode: 'BPJS_TK',
         targetNumber: customerId,
-        pin: '123456'
+        pin
       })
       setShowConfirm(false)
       setReceiptTx({

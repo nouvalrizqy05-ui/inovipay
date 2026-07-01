@@ -57,13 +57,13 @@ export default function GasPage() {
 
   const total = billData ? billData.billAmount + billData.penalty + billData.adminFee : 0
 
-  const handleConfirm = async () => {
+  const handleConfirm = async (pin: string) => {
     setIsProcessing(true)
     try {
       const res = await api.post('/transactions', {
         productCode: 'GAS_NEGARA',
         targetNumber: customerId,
-        pin: '123456'
+        pin
       })
       setShowConfirm(false)
       setReceiptTx({

@@ -81,13 +81,13 @@ export default function PaketSmsTelponPage() {
     setShowConfirm(true)
   }
 
-  const handleConfirm = async () => {
+  const handleConfirm = async (pin: string) => {
     setIsProcessing(true)
     try {
       const res = await api.post('/transactions', {
         productCode: selectedProduct.code,
         targetNumber: cleanPhone,
-        pin: '123456'
+        pin
       })
       
       setShowConfirm(false)

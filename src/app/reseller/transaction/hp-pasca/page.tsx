@@ -79,13 +79,13 @@ export default function HpPascaPage() {
 
   const total = billData ? billData.billAmount + billData.penalty + billData.adminFee : 0
 
-  const handleConfirm = async () => {
+  const handleConfirm = async (pin: string) => {
     setIsProcessing(true)
     try {
       const res = await api.post('/transactions', {
         productCode: 'HP_PASCA',
         targetNumber: cleanPhone,
-        pin: '123456'
+        pin
       })
       setShowConfirm(false)
       setReceiptTx({

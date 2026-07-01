@@ -47,13 +47,13 @@ export default function AktivasiVoucherPage() {
     setShowConfirm(true)
   }
 
-  const handleConfirm = async () => {
+  const handleConfirm = async (pin: string) => {
     setIsProcessing(true)
     try {
       const res = await api.post('/transactions', {
         productCode: selectedProduct.code,
         targetNumber: `${voucherCode}.${cleanPhone}`, // Gabungan untuk h2h
-        pin: '123456'
+        pin
       })
       
       setShowConfirm(false)

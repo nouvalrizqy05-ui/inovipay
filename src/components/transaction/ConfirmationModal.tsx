@@ -1,6 +1,6 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { formatRupiah } from '@/lib/utils'
-import { X, Loader2, AlertTriangle, Wallet } from 'lucide-react'
+import { X, Loader2, AlertTriangle, Wallet, Shield, Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
 
 interface DetailItem {
@@ -20,7 +20,7 @@ export interface ConfirmationModalData {
 interface ConfirmationModalProps {
   isOpen: boolean
   onClose: () => void
-  onConfirm: () => void
+  onConfirm: (pin: string) => void
   isLoading: boolean
   data: ConfirmationModalData | null
 }
@@ -32,15 +32,36 @@ export default function ConfirmationModal({
   isLoading,
   data
 }: ConfirmationModalProps) {
+  const [pin, setPin] = useState('')
+  const [showPin, setShowPin] = useState(false)
+  const [pinError, setPinError] = useState('')
+
   if (!isOpen || !data) return null
 
   const isInsufficientBalance = data.currentBalance < data.totalAmount
   const remainingBalance = data.currentBalance - data.totalAmount
 
+  const handleConfirm = () => {
+    if (!pin || pin.length < 6) {
+      setPinError('PIN harus 6 digit')
+      return
+    }
+    setPinError('')
+    onConfirm(pin)
+  }
+
+  const handleClose = () => {
+    if (!isLoading) {
+      setPin('')
+      setPinError('')
+      onClose()
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center p-0 sm:p-4">
       {/* Overlay click to close */}
-      <div className="absolute inset-0" onClick={() => !isLoading && onClose()} />
+      <div className="absolute inset-0" onClick={handleClose} />
       
       {/* Modal Container */}
       <div 
@@ -55,7 +76,7 @@ export default function ConfirmationModal({
         <div className="flex items-center justify-between px-5 pt-3 pb-4 border-b border-gray-100">
           <h3 className="text-lg font-bold text-gray-900">Konfirmasi</h3>
           <button 
-            onClick={onClose}
+            onClick={handleClose}
             disabled={isLoading}
             className="p-1.5 text-gray-400 hover:text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors"
           >
@@ -123,6 +144,37 @@ export default function ConfirmationModal({
             </div>
           )}
 
+          {/* PIN Input */}
+          {!isInsufficientBalance && (
+            <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
+              <div className="flex items-center gap-2 mb-3">
+                <Shield className="w-4 h-4 text-[#00B4A0]" />
+                <span className="text-sm font-bold text-gray-800">Konfirmasi PIN</span>
+              </div>
+              <p className="text-xs text-gray-500 mb-3">Masukkan PIN yang sama dengan PIN login Anda untuk melanjutkan.</p>
+              <div className="relative">
+                <input 
+                  type={showPin ? 'text' : 'password'}
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={pin}
+                  onChange={(e) => { setPin(e.target.value.replace(/\D/g, '')); setPinError('') }}
+                  placeholder="● ● ● ● ● ●"
+                  className={`w-full text-center text-xl tracking-[0.5em] font-mono py-3 px-4 pr-12 bg-white border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B4A0] transition-all ${pinError ? 'border-red-300 focus:ring-red-300' : 'border-gray-200'}`}
+                  disabled={isLoading}
+                />
+                <button 
+                  type="button" 
+                  onClick={() => setShowPin(!showPin)} 
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPin ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              {pinError && <p className="text-xs text-red-500 mt-1.5 font-semibold">{pinError}</p>}
+            </div>
+          )}
+
         </div>
 
         {/* Footer Actions */}
@@ -137,9 +189,9 @@ export default function ConfirmationModal({
             </Link>
           ) : (
             <button
-              onClick={onConfirm}
-              disabled={isLoading}
-              className="btn-primary w-full py-3.5 flex items-center justify-center gap-2 text-base shadow-lg shadow-teal-500/20"
+              onClick={handleConfirm}
+              disabled={isLoading || pin.length < 6}
+              className="btn-primary w-full py-3.5 flex items-center justify-center gap-2 text-base shadow-lg shadow-teal-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <>
@@ -147,13 +199,16 @@ export default function ConfirmationModal({
                   Memproses...
                 </>
               ) : (
-                'Konfirmasi & Bayar'
+                <>
+                  <Shield className="w-5 h-5" />
+                  Konfirmasi &amp; Bayar
+                </>
               )}
             </button>
           )}
           
           <button
-            onClick={onClose}
+            onClick={handleClose}
             disabled={isLoading}
             className="w-full mt-3 py-2 text-sm font-bold text-gray-500 hover:text-gray-700 transition-colors"
           >

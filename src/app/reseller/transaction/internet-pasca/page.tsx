@@ -68,13 +68,13 @@ export default function InternetPascaPage() {
 
   const total = billData ? billData.billAmount + billData.penalty + billData.adminFee : 0
 
-  const handleConfirm = async () => {
+  const handleConfirm = async (pin: string) => {
     setIsProcessing(true)
     try {
       const res = await api.post('/transactions', {
         productCode: 'INTERNET_PASCA',
         targetNumber: customerId,
-        pin: '123456'
+        pin
       })
       setShowConfirm(false)
       setReceiptTx({

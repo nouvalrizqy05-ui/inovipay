@@ -84,14 +84,14 @@ export default function PlnPascaPage() {
     setShowConfirm(true)
   }
 
-  const handleConfirm = async () => {
+  const handleConfirm = async (pin: string) => {
     setIsProcessing(true)
     try {
       // Mock payment
       const res = await api.post('/transactions', {
         productCode: 'PLN_PASCA',
         targetNumber: customerId,
-        pin: '123456'
+        pin
       })
       setShowConfirm(false)
       setReceiptTx({

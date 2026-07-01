@@ -4,6 +4,7 @@ import { requireAuth } from '@/lib/auth'
 import { createTransaction } from '@/lib/digiflazz'
 import { checkDigiflazzBalance } from '@/lib/balance-guard'
 import { sendNotification, sendWhatsApp } from '@/lib/notification'
+import bcrypt from 'bcryptjs'
 
 // Hitung poin: 1 poin per Rp 1.000 margin
 function calcPoints(margin: number): number {
@@ -15,10 +16,30 @@ function calcPoints(margin: number): number {
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await requireAuth(req)
-    const { productId, targetNumber } = await req.json()
+    const { productId, productCode, targetNumber, pin } = await req.json()
 
-    if (!productId || !targetNumber) {
-      return NextResponse.json({ error: 'productId dan targetNumber wajib diisi' }, { status: 400 })
+    if ((!productId && !productCode) || !targetNumber) {
+      return NextResponse.json({ error: 'Produk dan nomor tujuan wajib diisi' }, { status: 400 })
+    }
+
+    // Verify PIN
+    const userForPin = await prisma.user.findUnique({ where: { id: userId } })
+    if (!userForPin) return NextResponse.json({ error: 'User tidak ditemukan' }, { status: 404 })
+    
+    if (!pin) {
+      return NextResponse.json({ error: 'PIN wajib diisi untuk konfirmasi transaksi' }, { status: 400 })
+    }
+    const pinMatch = await bcrypt.compare(pin, userForPin.passwordHash)
+    if (!pinMatch) {
+      return NextResponse.json({ error: 'PIN salah. Transaksi dibatalkan.' }, { status: 401 })
+    }
+
+    // Resolve productId from productCode if needed
+    let resolvedProductId = productId
+    if (!resolvedProductId && productCode) {
+      const productByCode = await prisma.product.findUnique({ where: { code: productCode } })
+      if (!productByCode) return NextResponse.json({ error: 'Produk tidak ditemukan' }, { status: 404 })
+      resolvedProductId = productByCode.id
     }
 
     const user = await prisma.user.findUnique({
@@ -28,7 +49,7 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'User tidak ditemukan' }, { status: 404 })
     if (user.status !== 'ACTIVE') return NextResponse.json({ error: 'Akun belum aktif. Hubungi admin.' }, { status: 403 })
 
-    const product = await prisma.product.findUnique({ where: { id: productId } })
+    const product = await prisma.product.findUnique({ where: { id: resolvedProductId } })
     if (!product || !product.isActive) return NextResponse.json({ error: 'Produk tidak tersedia' }, { status: 404 })
 
     const wallet = user.wallet
@@ -55,7 +76,7 @@ export async function POST(req: NextRequest) {
       })
       return tx.transaction.create({
         data: {
-          userId, productId, targetNumber,
+          userId, productId: resolvedProductId, targetNumber,
           costPrice: product.costPrice,
           sellPrice, margin, pointsEarned,
           refIdH2h: refId, status: 'PENDING',

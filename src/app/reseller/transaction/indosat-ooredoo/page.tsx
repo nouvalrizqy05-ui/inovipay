@@ -60,13 +60,13 @@ export default function IndosatPascaPage() {
 
   const total = billData ? billData.billAmount + billData.penalty + billData.adminFee : 0
 
-  const handleConfirm = async () => {
+  const handleConfirm = async (pin: string) => {
     setIsProcessing(true)
     try {
       const res = await api.post('/transactions', {
         productCode: 'INDOSAT_PASCA',
         targetNumber: cleanPhone,
-        pin: '123456'
+        pin
       })
       setShowConfirm(false)
       setReceiptTx({
