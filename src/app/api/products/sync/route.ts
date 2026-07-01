@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
       
       // Hitung harga jual. Jika marginReseller kosong, ambil margin 2000.
       let margin = 2000
-      if (marginReseller !== undefined && marginReseller !== null && marginReseller !== 0 && !Number.isNaN(Number(marginReseller))) {
+      if (marginReseller !== undefined && marginReseller !== null && marginReseller !== '' && !Number.isNaN(Number(marginReseller))) {
         margin = Number(marginReseller)
       }
       const sell = cost + margin
