@@ -154,7 +154,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     if (error.message === 'UNAUTHORIZED') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     console.error('[TRANSACTION ERROR]', error)
-    return NextResponse.json({ error: 'Terjadi kesalahan server' }, { status: 500 })
+    return NextResponse.json({ error: error.message || 'Terjadi kesalahan server' }, { status: 500 })
   }
 }
 

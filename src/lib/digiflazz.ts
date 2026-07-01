@@ -70,7 +70,10 @@ export async function createTransaction(payload: TransactionPayload): Promise<Di
     }),
   })
   const data = await res.json()
-  if (!res.ok) throw new Error(data.message || 'Gagal kirim transaksi')
+  if (!res.ok) {
+    console.error('Digiflazz raw response:', data)
+    throw new Error(data?.data?.message || data?.message || 'Gagal kirim transaksi')
+  }
   return data.data
 }
 

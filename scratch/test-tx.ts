@@ -1,12 +1,26 @@
 import { PrismaClient } from '@prisma/client'
 import { SignJWT } from 'jose'
+import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
 const secret = new TextEncoder().encode("7f8b9e2a4c1d3f6b8a9c2d5e7f1a3b6c9d2e8f4a1b3c5d7e9f2a4b6c8d1e3f5")
 
 async function test() {
-  const user = await prisma.user.findFirst({ where: { role: 'RESELLER' } })
-  if (!user) return console.log("No user found")
+  const phone = '0899999999' + Math.floor(Math.random() * 1000)
+  const passwordHash = await bcrypt.hash('123456', 10)
+  
+  const user = await prisma.user.create({
+    data: {
+      name: 'Test User',
+      phone,
+      email: phone + '@test.com',
+      passwordHash,
+      status: 'ACTIVE',
+      wallet: {
+        create: { balance: 5000000, balanceHold: 0 }
+      }
+    }
+  })
   
   const token = await new SignJWT({ userId: user.id, role: user.role })
     .setProtectedHeader({ alg: 'HS256' })
@@ -15,6 +29,7 @@ async function test() {
     .sign(secret)
 
   const product = await prisma.product.findFirst({ where: { category: 'PULSA' } })
+  console.log("Testing transaction for product:", product?.code)
   
   const res = await fetch('http://localhost:3000/api/transactions', {
     method: 'POST',
@@ -25,7 +40,7 @@ async function test() {
     body: JSON.stringify({
       productCode: product?.code,
       targetNumber: '081234567890',
-      pin: 'Admin123456!'
+      pin: '123456'
     })
   })
   
@@ -34,4 +49,4 @@ async function test() {
   console.log("Response:", data)
 }
 
-test()
+test().catch(console.error).finally(() => prisma.$disconnect())
