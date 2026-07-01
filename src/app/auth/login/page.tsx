@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
@@ -11,6 +11,21 @@ export default function LoginPage() {
   const [form, setForm] = useState({ identifier: '', pin: '' })
   const [loading, setLoading] = useState(false)
   const [showPw, setShowPw] = useState(false)
+
+  // Redirect to dashboard if already logged in
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    const userStr = localStorage.getItem('user')
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr)
+        if (user.role === 'ADMIN') router.push('/admin/dashboard')
+        else router.push('/reseller/dashboard')
+      } catch (e) {
+        // Invalid user JSON, ignore
+      }
+    }
+  }, [router])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

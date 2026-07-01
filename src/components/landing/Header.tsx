@@ -15,6 +15,20 @@ const navLinks = [
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [dashboardUrl, setDashboardUrl] = useState('/auth/login')
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    const userStr = localStorage.getItem('user')
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr)
+        setIsLoggedIn(true)
+        setDashboardUrl(user.role === 'ADMIN' ? '/admin/dashboard' : '/reseller/dashboard')
+      } catch (e) {}
+    }
+  }, [])
 
   return (
     <header className="fixed w-full top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm">
@@ -39,12 +53,20 @@ export default function Header() {
 
           <div className="flex items-center gap-3">
             <InstallPwaButton className="hidden lg:flex !px-4 !py-2.5 !text-sm" />
-            <Link href="/auth/login" className="hidden sm:block text-amber-600 font-bold hover:text-amber-700 px-4 py-2">
-              Masuk
-            </Link>
-            <Link href="/auth/register" className="hidden sm:inline-flex bg-amber-500 hover:bg-amber-600 text-white font-bold px-6 py-2.5 rounded-full transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
-              Daftar Mitra
-            </Link>
+            {isLoggedIn ? (
+              <Link href={dashboardUrl} className="hidden sm:inline-flex bg-amber-500 hover:bg-amber-600 text-white font-bold px-6 py-2.5 rounded-full transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link href="/auth/login" className="hidden sm:block text-amber-600 font-bold hover:text-amber-700 px-4 py-2">
+                  Masuk
+                </Link>
+                <Link href="/auth/register" className="hidden sm:inline-flex bg-amber-500 hover:bg-amber-600 text-white font-bold px-6 py-2.5 rounded-full transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                  Daftar Mitra
+                </Link>
+              </>
+            )}
             {/* Mobile hamburger */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
@@ -72,20 +94,32 @@ export default function Header() {
               </Link>
             ))}
             <hr className="my-2" />
-            <Link
-              href="/auth/register"
-              onClick={() => setMobileOpen(false)}
-              className="block px-4 py-3 rounded-lg text-white bg-amber-500 font-bold hover:bg-amber-600 transition-colors text-center shadow-sm"
-            >
-              Daftar Mitra Gratis
-            </Link>
-            <Link
-              href="/auth/login"
-              onClick={() => setMobileOpen(false)}
-              className="block px-4 py-3 rounded-lg text-amber-600 font-bold hover:bg-amber-50 transition-colors text-center border-2 border-amber-100"
-            >
-              Masuk
-            </Link>
+            {isLoggedIn ? (
+              <Link
+                href={dashboardUrl}
+                onClick={() => setMobileOpen(false)}
+                className="block px-4 py-3 rounded-lg text-white bg-amber-500 font-bold hover:bg-amber-600 transition-colors text-center shadow-sm"
+              >
+                Ke Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/auth/register"
+                  onClick={() => setMobileOpen(false)}
+                  className="block px-4 py-3 rounded-lg text-white bg-amber-500 font-bold hover:bg-amber-600 transition-colors text-center shadow-sm"
+                >
+                  Daftar Mitra Gratis
+                </Link>
+                <Link
+                  href="/auth/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="block px-4 py-3 rounded-lg text-amber-600 font-bold hover:bg-amber-50 transition-colors text-center border-2 border-amber-100"
+                >
+                  Masuk
+                </Link>
+              </>
+            )}
             <InstallPwaButton className="w-full !text-sm !py-3" />
           </nav>
         </div>
