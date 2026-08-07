@@ -59,6 +59,29 @@ export async function getPriceList(category?: string, cmd: 'prepaid' | 'pasca' =
   return data.data
 }
 
+let cachedPriceList: any[] = []
+let lastCacheTime = 0
+const CACHE_TTL = 60 * 1000 // 1 menit
+
+export async function getAllPriceList() {
+  const now = Date.now()
+  if (cachedPriceList.length > 0 && now - lastCacheTime < CACHE_TTL) {
+    return cachedPriceList
+  }
+  try {
+    const [prepaid, pasca] = await Promise.all([
+      getPriceList(undefined, 'prepaid'),
+      getPriceList(undefined, 'pasca')
+    ])
+    cachedPriceList = [...(prepaid || []), ...(pasca || [])]
+    lastCacheTime = now
+    return cachedPriceList
+  } catch (err) {
+    console.error('Gagal memuat getAllPriceList', err)
+    return cachedPriceList // return old cache if failed
+  }
+}
+
 export interface TransactionPayload {
   refId: string
   skuCode: string

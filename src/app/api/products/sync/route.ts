@@ -38,6 +38,8 @@ export async function POST(req: NextRequest) {
     for (const item of priceList) {
       if (!item.buyer_sku_code || !item.product_name || !item.price) { skipped++; continue }
       
+      if (sellerName && item.seller_name?.toLowerCase() !== sellerName.toLowerCase()) { skipped++; continue }
+      
       activeSkuList.push(item.buyer_sku_code)
       const cost = Number(item.price)
       

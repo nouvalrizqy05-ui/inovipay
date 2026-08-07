@@ -38,7 +38,8 @@ export default function AdminProductsPage() {
   // Sync Modal State
   const [showSyncModal, setShowSyncModal] = useState(false)
   const [syncOptions, setSyncOptions] = useState({
-    marginReseller: 2000
+    marginReseller: 2000,
+    sellerName: ''
   })
   const [deletingInactive, setDeletingInactive] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -58,6 +59,7 @@ export default function AdminProductsPage() {
     try {
       const res = await api.post('/products/sync', {
         marginReseller: Number(syncOptions.marginReseller),
+        sellerName: syncOptions.sellerName || undefined
       })
       toast.success(res.data.message || 'Sync berhasil')
       fetchProducts()
@@ -303,6 +305,22 @@ export default function AdminProductsPage() {
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-1.5">Harga Jual otomatis = Harga Beli Digiflazz + Margin ini.</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Filter Seller <span className="text-gray-400 font-normal">(Opsional)</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={syncOptions.sellerName}
+                    onChange={e => setSyncOptions({...syncOptions, sellerName: e.target.value})}
+                    className="input"
+                    placeholder="Contoh: Digiflazz (Kosongkan utk semua)"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1.5">Hanya mengimpor produk dari nama seller tertentu.</p>
               </div>
             </div>
 

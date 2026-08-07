@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuth, requireAdmin } from '@/lib/auth'
+import { getAllPriceList } from '@/lib/digiflazz'
 
 export async function GET(req: NextRequest) {
   try {
@@ -18,7 +19,25 @@ export async function GET(req: NextRequest) {
       orderBy: [{ category: 'asc' }, { priceReseller: 'asc' }],
     })
 
-    return NextResponse.json({ products })
+    // Ambil status dari Digiflazz (cached)
+    const digiData = await getAllPriceList()
+    const digiMap: Record<string, any> = {}
+    digiData.forEach(d => { digiMap[d.buyer_sku_code] = d })
+
+    const mappedProducts = products.map(p => {
+      const digi = digiMap[p.skuH2h]
+      let isGangguan = false
+      if (digi) {
+        isGangguan = !digi.buyer_product_status || !digi.seller_product_status
+      } else {
+        // Jika tidak ditemukan di Digiflazz, asumsikan gangguan agar aman, atau biarkan false?
+        // Kita biarkan false agar tidak terblokir jika beda huruf besar kecil, 
+        // tapi sebaiknya digiflazz case-sensitive.
+      }
+      return { ...p, isGangguan }
+    })
+
+    return NextResponse.json({ products: mappedProducts })
   } catch (error: any) {
     if (error.message === 'UNAUTHORIZED') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     return NextResponse.json({ error: 'Server error' }, { status: 500 })

@@ -63,6 +63,18 @@ const ALL_CATEGORIES = [...PRABAYAR, ...PASCABAYAR]
 
 // ── Helpers ──
 
+interface Product {
+  id: string
+  code: string
+  name: string
+  category: string
+  costPrice: number
+  priceReseller: number
+  skuH2h: string
+  isActive: boolean
+  isGangguan?: boolean
+}
+
 function classifyProduct(p: any): string {
   return (p.category || 'LAINNYA').toUpperCase()
 }
@@ -451,11 +463,14 @@ function TransactionsContent() {
       {/* Product list */}
       {filteredProducts.length === 0 ? <Empty text="Produk tidak tersedia" /> : (
         <div className="space-y-2 pb-4">
-          {filteredProducts.map(p => (
+          {filteredProducts.map(p => {
+            const isDisabled = p.isGangguan || !p.isActive
+            return (
             <button
               key={p.id}
+              disabled={isDisabled}
               onClick={() => { setSelProduct(p); setTargetNumber(''); setView('order') }}
-              className="product-item w-full"
+              className={`product-item w-full ${isDisabled ? 'opacity-50 cursor-not-allowed bg-gray-50' : ''}`}
             >
               <div className="flex items-center justify-between">
                 <div className="text-left min-w-0 flex-1">
@@ -463,12 +478,13 @@ function TransactionsContent() {
                   <p className="text-[11px] text-gray-400 mt-0.5 font-mono">{p.code}</p>
                 </div>
                 <div className="text-right flex-shrink-0 ml-3 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" title="Tersedia" />
-                  <p className="font-black text-[#00B4A0]">{formatRupiah(Number(p.sellPrice))}</p>
+                  <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isDisabled ? 'bg-red-400' : 'bg-emerald-400'}`} title={isDisabled ? 'Gangguan / Nonaktif' : 'Tersedia'} />
+                  <p className={`font-black ${isDisabled ? 'text-gray-400' : 'text-[#00B4A0]'}`}>{formatRupiah(Number(p.sellPrice))}</p>
                 </div>
               </div>
             </button>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
