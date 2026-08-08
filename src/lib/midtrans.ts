@@ -61,7 +61,7 @@ export async function createDepositTransaction(params: CreateDepositTransactionP
   const enabledPayments = PAYMENT_CATEGORY_MAP[category]
   if (enabledPayments) parameter.enabled_payments = enabledPayments
 
-  return snap.createTransaction(parameter)
+  return snap.createTransaction(parameter as any)
 }
 
 // Verifikasi signature_key yang dikirim Midtrans di notification webhook.
